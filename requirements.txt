@@ -1,0 +1,1 @@
+# Bu uygulama ek paket gerektirmez; dosya Render derlemesi icin bulunur.

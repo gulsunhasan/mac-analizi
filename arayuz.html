@@ -1,0 +1,1097 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Maç Analizi – maç tahminleri, istatistik ve canlı skor</title>
+<meta name="description" content="Süper Lig, Avrupa ligleri ve Avrupa kupaları için maç tahminleri, olasılıklar, kart cezalıları, puan durumu ve canlı skor.">
+<meta property="og:title" content="Maç Analizi">
+<meta property="og:description" content="Maç tahminleri, istatistik ve canlı skor.">
+<meta property="og:image" content="/logo.svg">
+<meta name="theme-color" content="#123524">
+<link rel="icon" type="image/svg+xml" href="/logo.svg">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Maç Analizi">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<style>
+:root {
+  --bg: #f4f5f2; --kart: #ffffff; --yazi: #17201b; --soluk: #5f6b64; --cizgi: #dfe3dd;
+  --vurgu: #1f7a4d; --vurgu-soluk: #e3f1e9; --ev: #1f7a4d; --ber: #9aa39d; --dep: #2f5fa8;
+  --uyari: #a15c00; --uyari-zemin: #fdf1dc; --golge: 0 1px 2px rgba(20,30,25,.06), 0 4px 14px rgba(20,30,25,.05);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #111613; --kart: #1a211d; --yazi: #e8ede9; --soluk: #9aa69f; --cizgi: #2b352f;
+    --vurgu: #4cc38a; --vurgu-soluk: #1d3329; --ev: #4cc38a; --ber: #6d7872; --dep: #7aa7ee;
+    --uyari: #f0b45c; --uyari-zemin: #3a2c12; --golge: none;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--yazi);
+  font: 15px/1.45 -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif; }
+main { max-width: 980px; margin: 0 auto; padding: 20px 16px 60px; }
+header { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; margin-bottom: 16px; }
+h1 { font-size: 24px; margin: 0; letter-spacing: -.02em; line-height: 1.1; }
+.marka { display: flex; align-items: center; gap: 12px; flex: 1 1 auto; text-decoration: none; color: inherit; }
+.marka img { width: 44px; height: 44px; border-radius: 11px; display: block; }
+.marka small { display: block; color: var(--soluk); font-size: 13px; margin-top: 3px; }
+.reklam { margin: 0 0 14px; text-align: center; overflow: hidden; }
+.reklam:empty { display: none; }
+footer { margin-top: 36px; padding-top: 18px; border-top: 1px solid var(--cizgi); color: var(--soluk); font-size: 13px; }
+footer .ust2 { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; color: var(--yazi); font-weight: 600; }
+footer img { width: 24px; height: 24px; border-radius: 6px; }
+footer p { margin: 6px 0; }
+h2 { font-size: 15px; margin: 0 0 8px; }
+.veri { color: var(--soluk); font-size: 13px; }
+button, input[type=date] { font: inherit; color: var(--yazi); background: var(--kart);
+  border: 1px solid var(--cizgi); border-radius: 8px; padding: 6px 12px; cursor: pointer; }
+button:hover { border-color: var(--vurgu); }
+button.ana { background: var(--vurgu); border-color: var(--vurgu); color: #fff; font-weight: 600; }
+@media (prefers-color-scheme: dark) { button.ana { color: #0d1410; } }
+button:disabled { opacity: .55; cursor: default; }
+.serit { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 10px; }
+.cip { border-radius: 999px; padding: 4px 12px; font-size: 13px; }
+.cip.secili { background: var(--vurgu); border-color: var(--vurgu); color: #fff; }
+@media (prefers-color-scheme: dark) { .cip.secili { color: #0d1410; } }
+.kart { background: var(--kart); border: 1px solid var(--cizgi); border-radius: 12px;
+  padding: 14px 16px; margin-bottom: 10px; box-shadow: var(--golge); }
+.ust { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: baseline; color: var(--soluk); font-size: 13px; }
+.rozet { background: var(--vurgu-soluk); color: var(--vurgu); border-radius: 6px; padding: 1px 8px; font-weight: 600; }
+.rozet.uyari { background: var(--uyari-zemin); color: var(--uyari); }
+.takimlar { font-size: 18px; font-weight: 650; margin: 6px 0 10px; letter-spacing: -.01em; }
+.takimlar span { color: var(--soluk); font-weight: 400; padding: 0 6px; }
+.cubuk { display: flex; height: 26px; border-radius: 7px; overflow: hidden; font-size: 12px; font-weight: 600; color: #fff; }
+.cubuk div { display: flex; align-items: center; justify-content: center; min-width: 34px; white-space: nowrap; }
+.cubuk .e { background: var(--ev); } .cubuk .b { background: var(--ber); } .cubuk .d { background: var(--dep); }
+@media (prefers-color-scheme: dark) { .cubuk { color: #0d1410; } }
+.ozet { display: flex; flex-wrap: wrap; gap: 6px 18px; margin-top: 10px; font-size: 14px; }
+.ozet b { font-variant-numeric: tabular-nums; }
+.ozet .et { color: var(--soluk); }
+.alt { display: flex; gap: 8px; margin-top: 12px; }
+.detay { margin-top: 14px; border-top: 1px solid var(--cizgi); padding-top: 14px;
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px 28px; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+td { padding: 3px 0; border-bottom: 1px solid var(--cizgi); }
+td:nth-child(n+2) { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; padding-left: 10px; }
+td.adil { color: var(--soluk); width: 56px; }
+tr:last-child td { border-bottom: 0; }
+.arti { color: var(--vurgu); font-weight: 600; } .eksi { color: var(--soluk); }
+.haber { grid-column: 1 / -1; }
+.haber a { color: var(--yazi); text-decoration: none; display: block; padding: 6px 0; border-bottom: 1px solid var(--cizgi); }
+.haber a:hover { color: var(--vurgu); }
+.haber small { color: var(--soluk); display: block; }
+.not { color: var(--soluk); font-size: 13px; }
+.bos { text-align: center; padding: 34px 16px; color: var(--soluk); }
+.bilgi { background: var(--uyari-zemin); color: var(--uyari); border-radius: 10px; padding: 10px 14px; margin-bottom: 12px; font-size: 14px; }
+.kupon li { margin: 2px 0; }
+.durumlar { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 20px; margin: -4px 0 10px; font-size: 13px; color: var(--soluk); }
+.fd { display: inline-block; width: 18px; height: 18px; border-radius: 4px; font-size: 11px; font-weight: 700;
+  color: #fff; text-align: center; line-height: 18px; margin-right: 2px; }
+.fd.G { background: #2e9960; } .fd.B { background: #8b948e; } .fd.M { background: #c8503f; }
+.ist td:nth-child(2), .ist td:nth-child(3) { width: 30%; }
+.ist th { text-align: right; font-weight: 600; font-size: 12px; color: var(--soluk); padding-bottom: 4px; }
+.genis { grid-column: 1 / -1; }
+.canli { font-size: 14px; margin: -2px 0 10px; }
+.canli:empty { display: none; }
+.rozet.canliR { background: #c8503f; color: #fff; }
+.altizgara { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px 28px; }
+.onbir { margin: 4px 0 8px; }
+.sekmeler { display: flex; gap: 4px; margin-bottom: 14px; border-bottom: 1px solid var(--cizgi); }
+.sekmeler button { border: 0; border-bottom: 3px solid transparent; border-radius: 0; background: none;
+  padding: 8px 16px; font-weight: 600; color: var(--soluk); margin-bottom: -1px; }
+.sekmeler button.secili { color: var(--yazi); border-bottom-color: var(--vurgu); }
+.sekmeler button.var::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+  background: #c8503f; margin-right: 7px; animation: nabiz 1.6s ease-in-out infinite; }
+@keyframes nabiz { 50% { opacity: .25; } }
+@media (prefers-reduced-motion: reduce) { .sekmeler button.var::before { animation: none; } }
+.skorSatir { display: grid; grid-template-columns: 1fr auto 1fr; gap: 12px; align-items: center; margin: 10px 0 12px; }
+.skorSatir .tk { font-size: 17px; font-weight: 650; overflow-wrap: anywhere; }
+.skorSatir .sag { text-align: right; }
+.skorSatir .sk { font-size: 28px; font-weight: 750; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.kk { display: inline-block; min-width: 11px; height: 15px; border-radius: 2px; background: #d23b2a; color: #fff;
+  font-size: 10px; font-weight: 700; line-height: 15px; text-align: center; margin: 0 6px; vertical-align: -1px; }
+.degisim { display: flex; flex-wrap: wrap; gap: 4px 18px; margin-top: 10px; font-size: 14px; }
+.degisim .yukari { color: var(--vurgu); font-weight: 600; } .degisim .asagi { color: #c8503f; font-weight: 600; }
+.satir { display: flex; gap: 10px; align-items: baseline; padding: 7px 0; border-bottom: 1px solid var(--cizgi); }
+.satir:last-child { border-bottom: 0; }
+.satir .saat { color: var(--soluk); min-width: 44px; font-variant-numeric: tabular-nums; }
+.satir .ad { flex: 1; } .satir button { padding: 3px 10px; font-size: 13px; }
+.olaylar { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 16px; font-size: 13px; color: var(--soluk); margin: -6px 0 12px; }
+.olaylar .sag { text-align: right; }
+.anlatim { max-height: 380px; overflow: auto; font-size: 14px; }
+.cikti { color: var(--soluk); text-decoration: line-through; }
+.puan td, .puan th { padding: 5px 6px; }
+.puan th { text-align: right; font-size: 12px; color: var(--soluk); font-weight: 600; }
+.puan td:nth-child(2), .puan th:nth-child(2) { text-align: left; width: 100%; }
+.puan td:first-child { color: var(--soluk); white-space: nowrap; }
+.bz { display: inline-block; width: 5px; height: 18px; border-radius: 2px; margin-right: 8px; vertical-align: -4px; background: transparent; }
+.bz.sl, .bz.tur, .bz.yuk { background: #2f6fd0; } .bz.sle { background: #6fa8ee; } .bz.al { background: #e08a1e; }
+.bz.kl { background: #2e9960; } .bz.po { background: #8a63d2; } .bz.baraj { background: #d9b400; }
+.bz.dus, .bz.elen { background: #c8503f; }
+.lejant { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 13px; color: var(--soluk); margin-top: 12px; }
+.lejant .bz { height: 12px; vertical-align: -1px; margin-right: 6px; }
+@media (max-width: 560px) { .puan .gizle { display: none; } }
+@media (max-width: 560px) { .satir { flex-wrap: wrap; } .satir .ad { flex-basis: calc(100% - 60px); } }
+.olcu { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 10px; }
+.olcu div { background: var(--kart); border: 1px solid var(--cizgi); border-radius: 12px; padding: 12px 14px; }
+.olcu b { display: block; font-size: 26px; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.olcu span { color: var(--soluk); font-size: 13px; }
+.tuttu { color: var(--vurgu); font-weight: 600; } .tutmadi { color: #c8503f; font-weight: 600; }
+#asistanAc { position: fixed; right: 18px; bottom: 18px; z-index: 20; width: 58px; height: 58px; border-radius: 50%;
+  background: var(--vurgu); border: 0; color: #fff; box-shadow: 0 6px 20px rgba(0,0,0,.28); display: flex; align-items: center; justify-content: center; }
+#asistanAc svg { width: 28px; height: 28px; }
+@media (prefers-color-scheme: dark) { #asistanAc { color: #0d1410; } }
+#asistan { position: fixed; right: 18px; bottom: 88px; z-index: 20; width: 370px; max-width: calc(100vw - 24px);
+  height: 540px; max-height: calc(100vh - 110px); background: var(--kart); border: 1px solid var(--cizgi); border-radius: 16px;
+  box-shadow: 0 12px 40px rgba(0,0,0,.28); display: flex; flex-direction: column; overflow: hidden; }
+#asistan[hidden] { display: none; }
+#asistan .ustBar { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-bottom: 1px solid var(--cizgi); font-weight: 650; }
+#asistan .ustBar img { width: 26px; height: 26px; border-radius: 7px; }
+#asistan .ustBar small { display: block; font-weight: 400; color: var(--soluk); font-size: 12px; }
+#asistan .ustBar button { margin-left: auto; border: 0; background: none; font-size: 20px; padding: 2px 8px; }
+#asistanAkis { flex: 1; overflow: auto; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+.balon { max-width: 88%; padding: 9px 12px; border-radius: 14px; font-size: 14px; white-space: pre-line; overflow-wrap: anywhere; }
+.balon.ben { align-self: flex-end; background: var(--vurgu); color: #fff; border-bottom-right-radius: 4px; }
+@media (prefers-color-scheme: dark) { .balon.ben { color: #0d1410; } }
+.balon.o { align-self: flex-start; background: var(--bg); border: 1px solid var(--cizgi); border-bottom-left-radius: 4px; }
+.balon .macBag { display: block; width: 100%; text-align: left; margin-top: 6px; padding: 6px 10px; font-size: 13px; white-space: normal; }
+.hizli { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 12px 8px; }
+.hizli button { font-size: 12.5px; padding: 4px 10px; border-radius: 999px; }
+#asistanForm { display: flex; gap: 8px; padding: 10px 12px; border-top: 1px solid var(--cizgi); }
+#asistanForm input { flex: 1; }
+@media (max-width: 480px) { #asistan { right: 12px; bottom: 82px; height: calc(100vh - 100px); } }
+.tkBag { background: none; border: 0; padding: 0; font: inherit; color: inherit; cursor: pointer; text-align: inherit; }
+.tkBag:hover { color: var(--vurgu); text-decoration: underline; }
+.yildiz { background: none; border: 0; padding: 0 4px; font-size: 17px; line-height: 1; color: var(--ber); cursor: pointer; vertical-align: 1px; }
+.yildiz.dolu { color: #e0a100; }
+.one { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-bottom: 10px; }
+.one button { text-align: left; background: var(--kart); border: 1px solid var(--cizgi); border-radius: 12px; padding: 11px 14px; }
+.one small { display: block; color: var(--soluk); font-size: 12px; text-transform: uppercase; letter-spacing: .05em; }
+.one b { display: block; margin: 3px 0 1px; font-size: 15px; }
+.one span { color: var(--soluk); font-size: 13px; }
+.karsilastir { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; margin: 8px 0 12px; }
+.karsilastir div { border: 1px solid var(--cizgi); border-radius: 10px; padding: 8px 12px; font-size: 14px; }
+.karsilastir small { display: block; color: var(--soluk); }
+.bahis { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+.bahis a { border: 1px solid var(--cizgi); border-radius: 8px; padding: 5px 12px; text-decoration: none; color: var(--yazi); font-size: 14px; }
+.bahis a:hover { border-color: var(--vurgu); color: var(--vurgu); }
+.takimBas { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; margin-bottom: 12px; }
+.takimBas h2 { font-size: 22px; margin: 0; }
+.grupBaslik { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--soluk); margin: 18px 0 8px; }
+input[type=search], input[type=text], textarea { font: inherit; color: var(--yazi); background: var(--kart);
+  border: 1px solid var(--cizgi); border-radius: 8px; padding: 7px 12px; width: 100%; }
+input:focus, textarea:focus { outline: 2px solid var(--vurgu); outline-offset: -1px; }
+.arama { position: relative; margin-bottom: 10px; }
+#aramaSonuc { position: absolute; z-index: 5; left: 0; right: 0; top: 100%; margin-top: 4px; background: var(--kart);
+  border: 1px solid var(--cizgi); border-radius: 10px; box-shadow: 0 8px 28px rgba(0,0,0,.18); max-height: 340px; overflow: auto; }
+#aramaSonuc:empty { display: none; }
+#aramaSonuc button { display: block; width: 100%; text-align: left; border: 0; border-bottom: 1px solid var(--cizgi);
+  border-radius: 0; padding: 9px 14px; background: none; }
+#aramaSonuc button:hover { background: var(--vurgu-soluk); }
+#aramaSonuc small { color: var(--soluk); display: block; }
+.yorum { padding: 8px 0; border-bottom: 1px solid var(--cizgi); overflow-wrap: anywhere; }
+.yorum small { color: var(--soluk); }
+.yorumForm { display: grid; grid-template-columns: minmax(0, 180px) minmax(0, 1fr) auto; gap: 8px; margin-top: 10px; align-items: start; }
+@media (max-width: 600px) { .yorumForm { grid-template-columns: 1fr; } }
+ul { margin: 6px 0 0; padding-left: 20px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <a class="marka" href="/" aria-label="Maç Analizi ana sayfa">
+      <img src="/logo.svg" alt="" width="44" height="44">
+      <span><h1>Maç Analizi</h1><small>Tahmin, istatistik ve canlı skor</small></span>
+    </a>
+    <span class="veri" id="veri"></span>
+    <button id="guncelle">Veriyi güncelle</button>
+  </header>
+
+  <div class="reklam" id="reklamUst"></div>
+  <div class="sekmeler" role="tablist">
+    <button id="sekmeMaclar" class="secili" role="tab">Maçlar</button>
+    <button id="sekmeCanli" role="tab">Canlı</button>
+    <button id="sekmeLigler" role="tab">Ligler</button>
+    <button id="sekmeKarne" role="tab">Karne</button>
+    <button id="sekmeYorumlar" role="tab">Yorumlar</button>
+  </div>
+  <div class="arama">
+    <input type="search" id="ara" placeholder="Takım ara: Galatasaray, Türkiye, Arsenal…" autocomplete="off" aria-label="Maç ara">
+    <div id="aramaSonuc"></div>
+  </div>
+  <div id="maclarSayfa">
+  <div class="serit">
+    <button id="geri" aria-label="Önceki gün">‹</button>
+    <input type="date" id="tarih">
+    <button id="ileri" aria-label="Sonraki gün">›</button>
+    <button id="bugun">Bugün</button>
+    <button id="yarin">Yarın</button>
+  </div>
+  <div class="serit" id="ligler"></div>
+  <div id="durum"></div>
+  <div id="oneCikan"></div>
+  <div id="kupon"></div>
+  <div id="liste"></div>
+  <div id="genel"></div>
+  </div>
+  <div id="canliSayfa" hidden></div>
+  <div id="karneSayfa" hidden></div>
+  <div id="yorumlarSayfa" hidden></div>
+  <div id="takimSayfa" hidden></div>
+  <div id="liglerSayfa" hidden>
+    <div class="serit" id="ligSecim"></div>
+    <div id="ligIcerik"></div>
+  </div>
+  <p class="not">Yüzdeler istatistik modelinin tahminidir; parantez içindeki sayı o ihtimale karşılık gelen adil orandır.
+    Model sakatlık, ceza ve kadro haberlerini bilmez. Garanti değildir.</p>
+  <div class="reklam" id="reklamAlt" style="margin-top:24px"></div>
+  <footer>
+    <div class="ust2"><img src="/logo.svg" alt="" width="24" height="24"> Maç Analizi</div>
+    <p>Maç Analizi; geçmiş sonuçlardan hesaplanan olasılıkları, kart cezalılarını, puan durumunu ve canlı skoru bir arada gösterir.</p>
+    <p>Buradaki tahminler istatistik modelinin hesabıdır; bahis tavsiyesi değildir ve sonuç garantisi vermez. 18 yaşından küçükler için uygun değildir.</p>
+    <p>Maç verileri ESPN'den, haber başlıkları Google Haberler'den alınır.</p>
+  </footer>
+</main>
+
+<button id="asistanAc" aria-label="Maç asistanını aç" title="Maç asistanı">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.5A8 8 0 1 1 21 12z"/><path d="M9 11h.01M12 11h.01M15 11h.01"/></svg>
+</button>
+<div id="asistan" hidden role="dialog" aria-label="Maç asistanı">
+  <div class="ustBar"><img src="/logo.svg" alt=""><span>Maç asistanı<small>Sitedeki tahminlerden cevap verir</small></span>
+    <button id="asistanKapat" aria-label="Kapat">×</button></div>
+  <div id="asistanAkis" aria-live="polite"></div>
+  <div class="hizli" id="asistanHizli"></div>
+  <form id="asistanForm"><input type="text" id="asistanSoru" placeholder="Örn. Galatasaray kazanır mı?" maxlength="200" autocomplete="off" aria-label="Sorun">
+    <button class="ana" type="submit">Sor</button></form>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const el = (etiket, ozellik = {}, ...cocuk) => {
+  const e = document.createElement(etiket);
+  for (const [k, v] of Object.entries(ozellik)) {
+    if (k === 'class') e.className = v; else if (k === 'onclick') e.onclick = v; else e.setAttribute(k, v);
+  }
+  for (const c of cocuk.flat()) if (c != null) e.append(c);
+  return e;
+};
+const yz = p => '%' + (p * 100).toFixed(0);
+const adil = p => p > 0.001 ? (1 / p).toFixed(2) : '–';
+const iso = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+const gunAdi = s => new Date(s + 'T12:00').toLocaleDateString('tr-TR', { weekday: 'long', day: 'numeric', month: 'long' });
+
+let veri = null, seciliLig = null, veriZamani = 0, guncelleniyordu = false;
+
+// ---- Favori takımlar (yalnızca bu tarayıcıda saklanır) ----
+let favoriler = new Set();
+try { favoriler = new Set(JSON.parse(localStorage.getItem('favoriTakimlar') || '[]')); } catch (e) { /* depolama kapalı olabilir */ }
+function favoriDegistir(ad) {
+  favoriler.has(ad) ? favoriler.delete(ad) : favoriler.add(ad);
+  try { localStorage.setItem('favoriTakimlar', JSON.stringify([...favoriler])); } catch (e) { /* önemli değil */ }
+}
+const yildiz = (ad, sonra) => {
+  const b = el('button', { class: 'yildiz' + (favoriler.has(ad) ? ' dolu' : ''), 'aria-label': ad + ' favorilere ekle ya da çıkar',
+    title: favoriler.has(ad) ? 'Favorilerden çıkar' : 'Favorilere ekle' }, favoriler.has(ad) ? '★' : '☆');
+  b.onclick = e => { e.stopPropagation(); favoriDegistir(ad); sonra(); };
+  return b;
+};
+const takimBag = (ad, div) => el('button', { class: 'tkBag', onclick: () => takimAc(ad, div) }, ad);
+const favoriMac = m => favoriler.has(m.ev) || favoriler.has(m.dep);
+
+// ---- Paylaşma ----
+function macAdresi(m, tarih) {
+  return location.origin + '/?tarih=' + tarih + '&div=' + encodeURIComponent(m.div) + '&ev=' + encodeURIComponent(m.ev) + '&dep=' + encodeURIComponent(m.dep);
+}
+async function paylas(m, dugme) {
+  const metin = m.ev + ' – ' + m.dep + ': ' + m.ev + ' ' + yz(m.ms['1']) + ', beraberlik ' + yz(m.ms['X']) + ', ' + m.dep + ' ' + yz(m.ms['2']) +
+    '. En olası skor ' + m.skor[0][0] + '.';
+  const adres = macAdresi(m, veri.tarih);
+  try {
+    if (navigator.share) { await navigator.share({ title: 'Maç Analizi', text: metin, url: adres }); return; }
+    await navigator.clipboard.writeText(metin + ' ' + adres);
+    dugme.textContent = 'Kopyalandı';
+  } catch (e) {
+    if (e && e.name === 'AbortError') return;
+    dugme.textContent = 'Kopyalanamadı';
+  }
+  setTimeout(() => { dugme.textContent = 'Paylaş'; }, 2000);
+}
+const acik = new Set();
+
+async function getir(yol, secenek) {
+  const r = await fetch(yol, secenek);
+  const j = await r.json();
+  if (!r.ok) throw new Error(j.hata || 'Sunucu hatası');
+  return j;
+}
+
+function tablo(nesne) {
+  // Dizi verilirse sıra korunur ("12" gibi sayısal anahtarlar nesnede öne geçer).
+  return el('table', {}, (Array.isArray(nesne) ? nesne : Object.entries(nesne)).map(([k, p]) =>
+    el('tr', {}, el('td', {}, k), el('td', {}, yz(p)), el('td', { class: 'adil' }, adil(p)))));
+}
+const bolum = (baslik, icerik) => el('div', {}, el('h2', {}, baslik), icerik);
+
+async function haberleriYukle(kutu, m) {
+  kutu.replaceChildren(el('h2', {}, 'Haberler'), el('div', { class: 'not' }, 'Haberler yükleniyor…'));
+  try {
+    const h = await getir('/api/haber?ev=' + encodeURIComponent(m.ev) + '&dep=' + encodeURIComponent(m.dep));
+    kutu.replaceChildren(el('h2', {}, 'Haberler (son 7 gün)'),
+      h.length ? haberListesi(h) : el('div', { class: 'not' }, 'Bu maç için haber bulunamadı.'));
+  } catch (e) {
+    kutu.replaceChildren(el('h2', {}, 'Haberler'), el('div', { class: 'not' }, 'Haberler alınamadı: ' + e.message));
+  }
+}
+function haberListesi(h) {
+  return el('div', {}, h.map(x => el('a', { href: x.link, target: '_blank', rel: 'noopener noreferrer' }, x.baslik,
+    el('small', {}, [x.kaynak, x.zaman ? new Date(x.zaman * 1000).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' }) : '']
+      .filter(Boolean).join(' · ')))));
+}
+
+function yorumCiz(kutu, mac, liste) {
+  let kayitliAd = '';
+  try { kayitliAd = localStorage.getItem('yorumAdi') || ''; } catch (e) { /* depolama kapalı olabilir */ }
+  const ad = el('input', { type: 'text', placeholder: 'Adın', maxlength: '40', 'aria-label': 'Adın' });
+  ad.value = kayitliAd;
+  const metin = el('textarea', { rows: '2', placeholder: 'Bu maç hakkında yorumun…', maxlength: '500', 'aria-label': 'Yorum' });
+  const hata = el('div', { class: 'not' });
+  const gonder = el('button', { class: 'ana' }, 'Gönder');
+  gonder.onclick = async () => {
+    if (!metin.value.trim()) { hata.textContent = 'Önce bir yorum yaz.'; return; }
+    gonder.disabled = true;
+    try {
+      const yeni = await getir('/api/yorum', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mac, ad: ad.value, metin: metin.value }) });
+      try { localStorage.setItem('yorumAdi', ad.value); } catch (e) { /* önemli değil */ }
+      yorumCiz(kutu, mac, yeni);
+    } catch (e) { hata.textContent = 'Yorum gönderilemedi: ' + e.message; gonder.disabled = false; }
+  };
+  kutu.replaceChildren(el('h2', {}, 'Yorumlar' + (liste.length ? ' (' + liste.length + ')' : '')),
+    liste.length ? el('div', {}, liste.map(y => el('div', { class: 'yorum' }, el('b', {}, y.ad), ' ',
+      el('small', {}, new Date(y.zaman * 1000).toLocaleString('tr-TR', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })),
+      el('div', {}, y.metin)))) : el('div', { class: 'not' }, 'Henüz yorum yok. İlk yorumu sen yaz.'),
+    el('div', { class: 'yorumForm' }, ad, metin, gonder), hata);
+}
+async function yorumlariYukle(kutu, mac) {
+  try { yorumCiz(kutu, mac, await getir('/api/yorum?mac=' + encodeURIComponent(mac))); }
+  catch (e) { kutu.replaceChildren(el('h2', {}, 'Yorumlar'), el('div', { class: 'not' }, 'Yorumlar alınamadı: ' + e.message)); }
+}
+
+let aramaSayaci = 0, aramaZamani = null;
+function aramaYap() {
+  clearTimeout(aramaZamani);
+  const q = $('ara').value.trim(), kutu = $('aramaSonuc');
+  if (q.length < 2) { kutu.replaceChildren(); return; }
+  aramaZamani = setTimeout(async () => {
+    const sira = ++aramaSayaci;
+    try {
+      const r = await getir('/api/ara?q=' + encodeURIComponent(q));
+      if (sira !== aramaSayaci) return;
+      kutu.replaceChildren(...(r.length ? r.map(x => el('button', { onclick: () => macaGit(x) }, x.ev + ' – ' + x.dep,
+        el('small', {}, gunAdi(x.tarih) + ' ' + x.saat + ' · ' + x.lig))) : [el('div', { class: 'not', style: 'padding:10px 14px' }, '"' + q + '" için yaklaşan maç bulunamadı.')]));
+    } catch (e) { kutu.replaceChildren(el('div', { class: 'not', style: 'padding:10px 14px' }, 'Arama yapılamadı: ' + e.message)); }
+  }, 200);
+}
+async function macaGit(x) {
+  $('aramaSonuc').replaceChildren();
+  $('ara').value = '';
+  if (sekme !== 'maclar') sekmeSec('maclar');
+  seciliLig = null;
+  acik.add(x.div + x.ev + x.dep);
+  await git(x.tarih);
+  const kart = [...document.querySelectorAll('#liste .kart')].find(k => k.dataset.mac === x.div + x.ev + x.dep);
+  if (kart) kart.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+const simAdres = (m, ek = '') => '/api/sim?lh=' + m.lh + '&la=' + m.la + '&sh=' + m.sh + '&sa=' + m.sa + ek;
+async function simBolumu(kutu, m) {
+  kutu.replaceChildren(el('h2', {}, 'Simülasyon'), el('div', { class: 'not' }, 'Maç 10.000 kez oynatılıyor…'));
+  try {
+    const s = await getir(simAdres(m));
+    kutu.replaceChildren(el('h2', {}, 'Simülasyon (maç ' + s.n.toLocaleString('tr-TR') + ' kez oynatıldı)'),
+      el('div', { class: 'altizgara' },
+        tablo([[m.ev + ' kazanır', s.ms['1']], ['Beraberlik', s.ms['X']], [m.dep + ' kazanır', s.ms['2']],
+          ['Üst 2.5', s.ust25], ['KG Var', s.kg]]),
+        tablo(s.skor),
+        tablo([['İlk golü ' + m.ev + ' atar', s.sonraki_gol.ev], ['İlk golü ' + m.dep + ' atar', s.sonraki_gol.dep],
+          ['Gol olmaz', s.sonraki_gol.yok], ['İlk yarı daha gollü', s.yari.ilk], ['Yarılar eşit', s.yari.esit],
+          ['İkinci yarı daha gollü', s.yari.ikinci]])),
+      el('div', { class: 'not', style: 'margin-top:6px' }, 'Ortalama ' + s.ort_gol.toFixed(2) +
+        ' gol. Simülasyon takımların aynı güç değerlerini kullanır; her açılışta sonuçlar birkaç puan oynayabilir.'));
+  } catch (e) { kutu.replaceChildren(el('h2', {}, 'Simülasyon'), el('div', { class: 'not' }, 'Simülasyon yapılamadı: ' + e.message)); }
+}
+function kadroBolumu(kutu, m) {
+  const goster = k => {
+    if (!k.aciklandi) {
+      kutu.replaceChildren(el('h2', {}, 'Kadrolar'), el('div', { class: 'not' },
+        'İlk 11\'ler henüz açıklanmadı. Genelde maçtan yaklaşık bir saat önce açıklanır; açıklanınca burada görünür ve tahmin kendiliğinden yenilenir.'));
+      return;
+    }
+    const parca = [el('h2', {}, 'Kadrolar (açıklandı)')];
+    for (const t of [m.ev, m.dep]) {
+      const tk = k.takimlar[t];
+      if (!tk) continue;
+      parca.push(el('div', { class: 'onbir' }, el('b', {}, t + (tk.dizilis ? ' (' + tk.dizilis + ')' : '') + ': '),
+        tk.ilk11.map(o => o.ad).join(', ')));
+      const eksik = k.eksikler[t] || [];
+      if (eksik.length) parca.push(el('div', { class: 'onbir' }, 'İlk 11\'de olmayan golcüler: ' +
+        eksik.map(o => o.ad + ' (' + o.gol + ' gol, ' + o.durum + ')').join(', ') +
+        '. Beklenen gol −%' + ((k.etki[t] || 0) * 25).toFixed(1) + ' düşürüldü.'));
+    }
+    parca.push(el('div', { class: 'not' }, 'Değerlendirme, bu sezon en az 2 gol atmış oyuncuların ilk 11\'de olup olmamasına bakar; savunma ve orta saha eksiklerini ölçemez.'));
+    kutu.replaceChildren(...parca);
+  };
+  if (m.kadro) return goster(m.kadro);
+  if (!m.eid) return goster({ aciklandi: false });
+  kutu.replaceChildren(el('h2', {}, 'Kadrolar'), el('div', { class: 'not' }, 'Kadro kontrol ediliyor…'));
+  getir('/api/kadro?eid=' + m.eid).then(goster).catch(() => goster({ aciklandi: false }));
+}
+
+let canliDurum = {}, canliSim = {}, canliZaman = null;
+const dakikaBul = c => /HT|Half/i.test(c.aciklama) ? 45 : Math.min(90, c.saniye / 60);
+function canliCiz() {
+  for (const kutu of document.querySelectorAll('.canli')) {
+    const c = canliDurum[kutu.dataset.eid];
+    if (!c || c.durum === 'pre') { kutu.replaceChildren(); continue; }
+    const skor = el('b', {}, c.skor[0] + ' – ' + c.skor[1]);
+    if (c.durum === 'in') {
+      const s = canliSim[kutu.dataset.eid];
+      kutu.replaceChildren(el('span', { class: 'rozet canliR' }, 'CANLI ' + (c.dakika || '')), ' ', skor,
+        s ? el('span', { class: 'not' }, ' · şu anki tahmin: 1 ' + yz(s.ms['1']) + ' · X ' + yz(s.ms['X']) + ' · 2 ' + yz(s.ms['2']) +
+          ' · en olası bitiş ' + s.skor[0][0]) : null);
+    } else kutu.replaceChildren(el('span', { class: 'rozet' }, 'Bitti'), ' ', skor);
+  }
+}
+let bugunVeri = null, sekme = 'maclar';
+async function bugunuAl() {
+  const t = iso(new Date());
+  if (veri && veri.tarih === t) { bugunVeri = veri; return; }
+  if (!bugunVeri || bugunVeri.tarih !== t || bugunVeri.veri_zamani !== veriZamani) bugunVeri = await getir('/api/analiz?tarih=' + t);
+}
+async function canliBak() {
+  clearTimeout(canliZaman);
+  try {
+    await bugunuAl();
+    const bv = bugunVeri;
+    if (bv.maclar.length) {
+      canliDurum = await getir('/api/canli?tarih=' + bv.tarih);
+      for (const m of bv.maclar) {
+        const c = canliDurum[m.eid];
+        if (c && c.durum === 'in') canliSim[m.eid] = await getir(simAdres(m, '&dk=' + dakikaBul(c) +
+          '&h=' + c.skor[0] + '&a=' + c.skor[1] + '&kh=' + c.kirmizi[0] + '&ka=' + c.kirmizi[1]));
+      }
+      // Başlamasına 80 dakikadan az kalan ya da oynanan maçlarda kadro açıklandı mı diye bak
+      let degisti = false;
+      const simdi = Date.now();
+      for (let i = 0; i < bv.maclar.length; i++) {
+        const m = bv.maclar[i], c = canliDurum[m.eid];
+        const kalan = (new Date(m.baslama) - simdi) / 60000;
+        if (!m.eid || m.kadro || kalan > 80 || kalan < -130 || (c && c.bitti)) continue;
+        try {
+          const k = await getir('/api/kadro?eid=' + m.eid);
+          if (k.aciklandi && k.mac) { bv.maclar[i] = { ...k.mac, kadro: k }; degisti = true; }
+        } catch (e) { /* bir sonraki turda yeniden denenir */ }
+      }
+      if (degisti && veri === bv) ciz();
+    } else canliDurum = {};
+  } catch (e) { /* bağlantı yoksa bir sonraki turda yeniden denenir */ }
+  canliCiz();
+  canliSayfaCiz();
+  canliZaman = setTimeout(canliBak, 30000);
+}
+
+const acikDetay = new Set(), detayOnbellek = {};
+function olaySatirlari(c) {
+  const onemli = (c.olaylar || []).filter(o => o.tip.startsWith('Gol') || o.tip.startsWith('Kendi') || o.tip === 'Kırmızı kart');
+  if (!onemli.length) return null;
+  const yaz = taraf => el('div', { class: taraf === 'dep' ? 'sag' : '' }, onemli.filter(o => o.taraf === taraf).map(o =>
+    el('div', {}, o.tip === 'Kırmızı kart' ? el('span', { class: 'kk', title: 'Kırmızı kart' }) : null,
+      o.dk + ' ' + o.oyuncu + (o.tip === 'Gol (penaltı)' ? ' (pen.)' : o.tip === 'Kendi kalesine gol' ? ' (k.k.)' : ''))));
+  return el('div', { class: 'olaylar' }, yaz('ev'), yaz('dep'));
+}
+function macDetayCiz(kutu, m, d) {
+  const parca = [];
+  if (d.istatistik.length) parca.push(el('div', {}, el('h2', {}, 'Maç istatistikleri'), el('table', { class: 'ist' },
+    el('tr', {}, el('th', {}, ''), el('th', {}, m.ev), el('th', {}, m.dep)),
+    d.istatistik.map(([ad, a, b]) => el('tr', {}, el('td', {}, ad), el('td', {}, a), el('td', {}, b))))));
+  const takimlar = [m.ev, m.dep].filter(t => d.kadro[t] && d.kadro[t].ilk11.length);
+  if (takimlar.length) parca.push(el('div', {}, el('h2', {}, 'Sahaya çıkan kadrolar'), takimlar.map(t => {
+    const k = d.kadro[t];
+    return el('div', { class: 'onbir' }, el('b', {}, t + (k.dizilis ? ' (' + k.dizilis + ')' : '') + ': '),
+      k.ilk11.flatMap((o, i) => [i ? ', ' : '', o.cikti ? el('span', { class: 'cikti', title: 'Oyundan çıktı' }, o.ad) : o.ad]),
+      k.giren.length ? el('div', { class: 'not' }, 'Oyuna girenler: ' + k.giren.join(', ')) : null);
+  })));
+  parca.push(el('div', { class: 'genis' }, el('h2', {}, 'Maç anlatımı'), d.anlatim.length
+    ? el('div', { class: 'anlatim' }, d.anlatim.map(a => el('div', { class: 'satir' }, el('span', { class: 'saat' }, a.dk),
+        el('span', { class: 'ad' }, a.onemli ? el('b', {}, a.metin) : a.metin))))
+    : el('div', { class: 'not' }, 'Bu maç için anlatım henüz yok.')));
+  kutu.replaceChildren(...parca);
+}
+function macDetayKutu(m) {
+  const kutu = el('div', { class: 'detay' });
+  if (detayOnbellek[m.eid]) macDetayCiz(kutu, m, detayOnbellek[m.eid]);
+  else kutu.append(el('div', { class: 'not' }, 'Maç ayrıntıları yükleniyor…'));
+  getir('/api/macdetay?eid=' + m.eid).then(d => { detayOnbellek[m.eid] = d; macDetayCiz(kutu, m, d); })
+    .catch(e => { if (!detayOnbellek[m.eid]) kutu.replaceChildren(el('div', { class: 'not' }, 'Maç ayrıntıları alınamadı: ' + e.message)); });
+  return kutu;
+}
+const detayDugmesi = (m, kapali) => el('button', { onclick: () => {
+  acikDetay.has(m.eid) ? acikDetay.delete(m.eid) : acikDetay.add(m.eid);
+  canliSayfaCiz();
+} }, acikDetay.has(m.eid) ? 'Kapat' : kapali);
+const kirmiziIsaret = n => n ? el('span', { class: 'kk', title: n + ' kırmızı kart' }, n > 1 ? String(n) : '') : null;
+function olasilikCubugu(ms) {
+  const c = el('div', { class: 'cubuk' });
+  for (const [sinif, k] of [['e', '1'], ['b', 'X'], ['d', '2']]) {
+    const parca = el('div', { class: sinif }, k + ' ' + yz(ms[k]));
+    parca.style.width = (ms[k] * 100) + '%';
+    c.append(parca);
+  }
+  return c;
+}
+function canliKart(m) {
+  const c = canliDurum[m.eid], s = canliSim[m.eid];
+  const k = el('div', { class: 'kart' });
+  k.append(el('div', { class: 'ust' }, el('span', { class: 'rozet canliR' }, c.dakika || 'Canlı'), el('span', { class: 'rozet' }, m.lig)));
+  k.append(el('div', { class: 'skorSatir' }, el('span', { class: 'tk' }, m.ev, kirmiziIsaret(c.kirmizi[0])),
+    el('span', { class: 'sk' }, c.skor[0] + ' – ' + c.skor[1]), el('span', { class: 'tk sag' }, kirmiziIsaret(c.kirmizi[1]), m.dep)));
+  const olay = olaySatirlari(c);
+  if (olay) k.append(olay);
+  if (s) {
+    k.append(olasilikCubugu(s.ms));
+    const fark = (ad, anahtar) => {
+      const once = m.ms[anahtar], simdi = s.ms[anahtar], d = Math.round((simdi - once) * 100);
+      return el('span', {}, ad + ': ' + yz(once) + ' → ', el('b', {}, yz(simdi)), ' ',
+        d ? el('span', { class: d > 0 ? 'yukari' : 'asagi' }, (d > 0 ? '▲' : '▼') + Math.abs(d)) : null);
+    };
+    k.append(el('div', { class: 'degisim' }, fark(m.ev, '1'), fark('Beraberlik', 'X'), fark(m.dep, '2')));
+    const sg = s.sonraki_gol;
+    k.append(el('div', { class: 'ozet' },
+      el('span', {}, el('span', { class: 'et' }, 'En olası bitiş '), el('b', {}, s.skor[0][0] + ' (' + yz(s.skor[0][1]) + ')')),
+      el('span', {}, el('span', { class: 'et' }, 'Sıradaki gol '), el('b', {}, sg.yok > Math.max(sg.ev, sg.dep) ? 'gol olmaz ' + yz(sg.yok)
+        : (sg.ev >= sg.dep ? m.ev + ' ' + yz(sg.ev) : m.dep + ' ' + yz(sg.dep)))),
+      el('span', {}, el('span', { class: 'et' }, 'Maç sonu Üst 2.5 '), el('b', {}, yz(s.ust25)))));
+  }
+  k.append(el('div', { class: 'alt' }, detayDugmesi(m, 'Anlatım ve istatistikler'),
+    el('button', { onclick: () => macaGit({ tarih: bugunVeri.tarih, div: m.div, ev: m.ev, dep: m.dep }) }, 'Maç önü analizi')));
+  if (acikDetay.has(m.eid)) k.append(macDetayKutu(m));
+  return k;
+}
+function canliSayfaCiz() {
+  const mac = bugunVeri ? bugunVeri.maclar : [];
+  const canli = mac.filter(m => canliDurum[m.eid] && canliDurum[m.eid].durum === 'in');
+  $('sekmeCanli').textContent = 'Canlı' + (canli.length ? ' ' + canli.length : '');
+  $('sekmeCanli').classList.toggle('var', canli.length > 0);
+  if (sekme !== 'canli') return;
+  const simdi = Date.now(), kutu = $('canliSayfa');
+  const dakikaKala = m => (new Date(m.baslama) - simdi) / 60000;
+  const baslamadi = m => !canliDurum[m.eid] || canliDurum[m.eid].durum === 'pre';
+  const yakinda = mac.filter(m => baslamadi(m) && dakikaKala(m) > -15 && dakikaKala(m) <= 180);
+  const biten = mac.filter(m => canliDurum[m.eid] && canliDurum[m.eid].durum === 'post');
+  const parca = [];
+  const git2 = m => el('button', { onclick: () => macaGit({ tarih: bugunVeri.tarih, div: m.div, ev: m.ev, dep: m.dep }) }, 'Analiz');
+  if (canli.length) {
+    parca.push(el('div', { class: 'grupBaslik' }, 'Şu an oynanıyor · ' + canli.length + ' maç'));
+    canli.forEach(m => parca.push(canliKart(m)));
+  } else {
+    const sonraki = mac.filter(m => baslamadi(m) && dakikaKala(m) > 0).sort((a, b) => a.baslama.localeCompare(b.baslama))[0];
+    parca.push(el('div', { class: 'kart bos' }, el('div', {}, 'Şu anda oynanan maç yok.'),
+      sonraki ? el('div', {}, 'Bugünkü sıradaki maç: ' + sonraki.saat + ' ' + sonraki.ev + ' – ' + sonraki.dep) : null));
+  }
+  if (yakinda.length) {
+    parca.push(el('div', { class: 'grupBaslik' }, 'Üç saat içinde başlayacak'));
+    parca.push(el('div', { class: 'kart' }, yakinda.map(m => el('div', { class: 'satir' }, el('span', { class: 'saat' }, m.saat),
+      el('span', { class: 'ad' }, m.ev + ' – ' + m.dep, m.kadro ? el('span', { class: 'rozet', style: 'margin-left:8px' }, 'Kadro açıklandı') : null),
+      el('span', { class: 'not' }, '1 ' + yz(m.ms['1']) + ' · X ' + yz(m.ms['X']) + ' · 2 ' + yz(m.ms['2'])), git2(m)))));
+  }
+  if (biten.length) {
+    parca.push(el('div', { class: 'grupBaslik' }, 'Bugün biten'));
+    parca.push(el('div', { class: 'kart' }, biten.flatMap(m => {
+      const c = canliDurum[m.eid], sonuc = c.skor[0] > c.skor[1] ? '1' : (c.skor[0] === c.skor[1] ? 'X' : '2');
+      const favori = Object.entries(m.ms).sort((a, b) => b[1] - a[1])[0][0];
+      const satir = el('div', { class: 'satir' }, el('span', { class: 'saat' }, c.skor[0] + ' – ' + c.skor[1]),
+        el('span', { class: 'ad' }, m.ev + ' – ' + m.dep),
+        el('span', { class: 'not' }, 'model favorisi ' + favori + (favori === sonuc ? ' · tuttu' : ' · tutmadı')), detayDugmesi(m, 'Özet'), git2(m));
+      return acikDetay.has(m.eid) ? [satir, macDetayKutu(m)] : [satir];
+    })));
+  }
+  parca.push(el('p', { class: 'not' }, 'Skorlar, goller ve kartlar 30 saniyede bir yenilenir. Canlı yüzdeler, maçın kalan süresinin mevcut skor ve kırmızı kartlarla 10.000 kez oynatılmasıyla hesaplanır.'));
+  kutu.replaceChildren(...parca);
+}
+let seciliLigSayfa = null;
+async function ligSayfaAc(div) {
+  seciliLigSayfa = div;
+  for (const b of $('ligSecim').children) b.classList.toggle('secili', b.dataset.div === div);
+  const kutu = $('ligIcerik');
+  kutu.replaceChildren(el('div', { class: 'kart bos' }, 'Lig yükleniyor…'));
+  try {
+    const d = await getir('/api/lig?div=' + encodeURIComponent(div));
+    if (seciliLigSayfa !== div) return;
+    const parca = [];
+    if (!d.maclar.length) parca.push(el('div', { class: 'kart bos' }, 'Bu ligde fikstürde yaklaşan maç yok.'));
+    let gun = null, grup = null;
+    for (const m of d.maclar) {
+      if (m.tarih !== gun) {
+        gun = m.tarih;
+        parca.push(el('div', { class: 'grupBaslik' }, gunAdi(gun)));
+        grup = el('div', { class: 'kart' });
+        parca.push(grup);
+      }
+      grup.append(el('div', { class: 'satir' }, el('span', { class: 'saat' }, m.saat),
+        el('span', { class: 'ad' }, m.ev + ' – ' + m.dep,
+          m.cezali ? el('span', { class: 'rozet uyari', style: 'margin-left:8px' }, m.cezali + ' cezalı') : null),
+        m.ms ? el('span', { class: 'not' }, '1 ' + yz(m.ms['1']) + ' · X ' + yz(m.ms['X']) + ' · 2 ' + yz(m.ms['2']) + ' · ' + m.skor)
+             : el('span', { class: 'not' }, 'tahmin yok'),
+        el('button', { onclick: () => macaGit(m) }, 'Analiz')));
+    }
+    if (d.maclar.some(m => m.kaba)) parca.push(el('p', { class: 'not' }, 'Bu turnuvada takım başına az maç olduğu için tahminler kabadır.'));
+    if (d.tablo.length) {
+      parca.push(el('div', { class: 'grupBaslik' }, 'Puan durumu'));
+      parca.push(el('div', { class: 'kart' }, el('table', { class: 'puan' },
+        el('tr', {}, el('th', {}, '#'), el('th', {}, 'Takım'), el('th', {}, 'O'), el('th', { class: 'gizle' }, 'A'),
+          el('th', { class: 'gizle' }, 'Y'), el('th', {}, 'Av'), el('th', {}, 'P'), el('th', { class: 'gizle' }, 'Form')),
+        d.tablo.map(t => el('tr', {}, el('td', {}, el('span', { class: 'bz ' + (t.bolge || ''),
+            title: t.bolge ? (d.bolgeler.find(b => b[0] === t.bolge) || [])[1] || '' : '' }), String(t.sira)),
+          el('td', {}, t.takim), el('td', {}, t.o),
+          el('td', { class: 'gizle' }, t.ag), el('td', { class: 'gizle' }, t.yg), el('td', {}, (t.ag - t.yg > 0 ? '+' : '') + (t.ag - t.yg)),
+          el('td', {}, el('b', {}, t.p)), el('td', { class: 'gizle' }, t.form.map(x => el('span', { class: 'fd ' + x }, x))))),
+        ), d.bolgeler && d.bolgeler.length ? el('div', { class: 'lejant' },
+          d.bolgeler.map(([kod, ad]) => el('span', {}, el('span', { class: 'bz ' + kod }), ad))) : null,
+        d.bolge_notu ? el('div', { class: 'not', style: 'margin-top:8px' }, d.bolge_notu) : null));
+      parca.push(el('p', { class: 'not' }, 'Puan durumu indirilen maç sonuçlarından hesaplanır; ceza puanları ve ikili averaj kuralları hesaba katılmaz. Renkli bölgeler ligin genel kuralına göredir; kupa şampiyonları ve ülke puanı Avrupa kontenjanlarını değiştirebilir.'));
+    }
+    kutu.replaceChildren(...parca);
+  } catch (e) { kutu.replaceChildren(el('div', { class: 'bilgi' }, 'Lig alınamadı: ' + e.message)); }
+}
+async function liglerAc() {
+  try {
+    const l = await getir('/api/ligler');
+    $('ligSecim').replaceChildren(...l.map(x => {
+      const b = el('button', { class: 'cip', 'data-div': x.div, onclick: () => ligSayfaAc(x.div) }, x.lig);
+      return b;
+    }));
+    if (!l.length) { $('ligIcerik').replaceChildren(el('div', { class: 'kart bos' }, 'Henüz veri yok.')); return; }
+    ligSayfaAc(seciliLigSayfa && l.some(x => x.div === seciliLigSayfa) ? seciliLigSayfa : l[0].div);
+  } catch (e) { $('ligIcerik').replaceChildren(el('div', { class: 'bilgi' }, 'Ligler alınamadı: ' + e.message)); }
+}
+async function karneAc() {
+  const kutu = $('karneSayfa');
+  kutu.replaceChildren(el('div', { class: 'kart bos' }, 'Karne hesaplanıyor…'));
+  try {
+    const k = await getir('/api/karne');
+    if (!k.n) { kutu.replaceChildren(el('div', { class: 'kart bos' }, 'Karne için yeterli oynanmış maç yok.')); return; }
+    const ad = { '1': 'ev sahibi', 'X': 'beraberlik', '2': 'deplasman' };
+    kutu.replaceChildren(
+      el('div', { class: 'olcu' },
+        el('div', {}, el('b', {}, yz(k.isabet)), el('span', {}, 'Maç sonucu isabeti (favori tuttu)')),
+        el('div', {}, el('b', {}, yz(k.ust_isabet)), el('span', {}, 'Alt/Üst 2.5 isabeti')),
+        el('div', {}, el('b', {}, k.n.toLocaleString('tr-TR')), el('span', {}, 'Son ' + k.gun + ' günde değerlendirilen maç'))),
+      el('div', { class: 'grupBaslik' }, 'Model ne kadar emindi, ne kadar tuttu'),
+      el('div', { class: 'kart' }, el('table', { class: 'ist' },
+        el('tr', {}, el('th', {}, ''), el('th', {}, 'Maç'), el('th', {}, 'Tutan')),
+        k.dilimler.map(d => el('tr', {}, el('td', {}, d.ad), el('td', {}, d.n), el('td', {}, el('b', {}, yz(d.isabet))))))),
+      el('div', { class: 'grupBaslik' }, 'Liglere göre isabet'),
+      el('div', { class: 'kart' }, el('table', { class: 'ist' },
+        el('tr', {}, el('th', {}, ''), el('th', {}, 'Maç'), el('th', {}, 'Tutan')),
+        k.ligler.map(l => el('tr', {}, el('td', {}, l.lig), el('td', {}, l.n), el('td', {}, el('b', {}, yz(l.isabet))))))),
+      el('div', { class: 'grupBaslik' }, 'Son maçlar'),
+      el('div', { class: 'kart' }, k.maclar.map(m => el('div', { class: 'satir' },
+        el('span', { class: 'saat' }, m.skor),
+        el('span', { class: 'ad' }, m.ev + ' – ' + m.dep, el('span', { class: 'not' }, ' · ' + m.lig + ' · ' +
+          new Date(m.tarih + 'T12:00').toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' }))),
+        el('span', { class: 'not' }, 'tahmin: ' + ad[m.favori] + ' ' + yz(m.guven)),
+        el('span', { class: m.tuttu ? 'tuttu' : 'tutmadi' }, m.tuttu ? 'Tuttu' : 'Tutmadı')))),
+      el('p', { class: 'not' }, 'Karne geriye dönük hesaplanır: her maç, yalnızca o maçtan önce oynanmış sonuçlarla yeniden tahmin edilir ve gerçek skorla karşılaştırılır. Milli maçlar ve Avrupa kupaları karneye dahil değildir. Geçmişteki isabet gelecek için garanti değildir.'));
+  } catch (e) { kutu.replaceChildren(el('div', { class: 'bilgi' }, 'Karne alınamadı: ' + e.message)); }
+}
+let oncekiSekme = 'maclar';
+async function takimAc(ad, div) {
+  if (sekme !== 'takim') oncekiSekme = sekme;
+  sekmeSec('takim');
+  const kutu = $('takimSayfa');
+  kutu.replaceChildren(el('div', { class: 'kart bos' }, ad + ' yükleniyor…'));
+  window.scrollTo(0, 0);
+  try {
+    const t = await getir('/api/takim?ad=' + encodeURIComponent(ad) + '&div=' + encodeURIComponent(div || ''));
+    const geri = el('button', { onclick: () => sekmeSec(oncekiSekme) }, '‹ Geri');
+    if (!t.bulundu) { kutu.replaceChildren(geri, el('div', { class: 'kart bos' }, ad + ' için veri bulunamadı.')); return; }
+    const satirD = (etiket, k) => el('tr', {}, el('td', {}, etiket), el('td', {}, k.g + ' G · ' + k.b + ' B · ' + k.m + ' M'), el('td', {}, k.ag + '-' + k.yg));
+    const parca = [el('div', { class: 'takimBas' }, geri, el('h2', {}, t.ad), yildiz(t.ad, () => takimAc(ad, div)),
+      el('span', { class: 'rozet' }, t.lig), t.diger_ligler.map(d => el('button', { class: 'cip', onclick: () => takimAc(ad, d) }, 'Diğer turnuva')))];
+    if (t.sira) parca.push(el('div', { class: 'olcu' },
+      el('div', {}, el('b', {}, t.sira.sira + '.'), el('span', {}, 'Sıra')),
+      el('div', {}, el('b', {}, t.sira.p), el('span', {}, t.sira.o + ' maçta puan')),
+      el('div', {}, el('b', {}, t.sira.ag + '-' + t.sira.yg), el('span', {}, 'Attığı – yediği gol')),
+      el('div', {}, el('b', {}, t.form.map(x => el('span', { class: 'fd ' + x }, x))), el('span', {}, 'Son beş maç'))));
+    if (t.yaklasan.length) {
+      parca.push(el('div', { class: 'grupBaslik' }, 'Sıradaki maçlar'));
+      parca.push(el('div', { class: 'kart' }, t.yaklasan.map(m => el('div', { class: 'satir' },
+        el('span', { class: 'saat' }, new Date(m.tarih + 'T12:00').toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' })),
+        el('span', { class: 'ad' }, m.ev + ' – ' + m.dep, el('span', { class: 'not' }, ' · ' + m.lig + (m.saat ? ' · ' + m.saat : ''))),
+        m.ms ? el('span', { class: 'not' }, '1 ' + yz(m.ms['1']) + ' · X ' + yz(m.ms['X']) + ' · 2 ' + yz(m.ms['2'])) : null,
+        el('button', { onclick: () => macaGit(m) }, 'Analiz')))));
+    }
+    parca.push(el('div', { class: 'grupBaslik' }, 'Bu sezon iç saha ve deplasman'));
+    parca.push(el('div', { class: 'kart' }, el('table', { class: 'ist' },
+      el('tr', {}, el('th', {}, ''), el('th', {}, 'Sonuçlar'), el('th', {}, 'Gol')), satirD('İç saha', t.denge.ic), satirD('Deplasman', t.denge.dis))));
+    if (t.golculer.length || t.sinirda.length || t.cezali.length) {
+      parca.push(el('div', { class: 'grupBaslik' }, 'Oyuncular'));
+      parca.push(el('div', { class: 'kart' },
+        t.golculer.length ? el('div', { class: 'onbir' }, el('b', {}, 'Golcüler: '), t.golculer.map(([o, n]) => o + ' (' + n + ')').join(', ')) : null,
+        t.cezali.length ? el('div', { class: 'onbir' }, el('b', {}, 'Cezalı görünenler: '), t.cezali.map(c => c.ad + ' (' + c.neden + ')').join(', ')) : null,
+        t.sinirda.length ? el('div', { class: 'onbir' }, el('b', {}, 'Sarı kart sınırında: '), t.sinirda.join(', ')) : null,
+        el('div', { class: 'not' }, 'Golcüler ve kartlar bu ligdeki maç kayıtlarından sayılır' + (t.sinir ? ' (bu ligde ' + t.sinir + ' sarı kart = 1 maç ceza).' : '.'))));
+    }
+    if (t.son.length) {
+      parca.push(el('div', { class: 'grupBaslik' }, 'Son maçlar'));
+      parca.push(el('div', { class: 'kart' }, t.son.map(m => el('div', { class: 'satir' },
+        el('span', { class: 'fd ' + m.sonuc }, m.sonuc), el('span', { class: 'saat' }, m.skor),
+        el('span', { class: 'ad' }, m.ev + ' – ' + m.dep),
+        el('span', { class: 'not' }, new Date(m.tarih + 'T12:00').toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' }))))));
+    }
+    kutu.replaceChildren(...parca);
+  } catch (e) { kutu.replaceChildren(el('div', { class: 'bilgi' }, 'Takım alınamadı: ' + e.message)); }
+}
+async function yorumlarAc() {
+  const kutu = $('yorumlarSayfa');
+  kutu.replaceChildren(el('div', { class: 'kart bos' }, 'Yorumlar yükleniyor…'));
+  try {
+    const y = await getir('/api/yorumlar');
+    if (!y.length) { kutu.replaceChildren(el('div', { class: 'kart bos' }, el('div', {}, 'Henüz yorum yok.'),
+      el('div', {}, 'Bir maçı açıp altındaki yorum kutusuna yazarak ilk yorumu sen bırakabilirsin.'))); return; }
+    kutu.replaceChildren(el('div', { class: 'grupBaslik' }, 'Son yorumlar'),
+      el('div', { class: 'kart' }, y.map(x => el('div', { class: 'yorum' }, el('b', {}, x.ad), ' ',
+        el('small', {}, new Date(x.zaman * 1000).toLocaleString('tr-TR', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' }) +
+          ' · ' + x.ev + ' – ' + x.dep),
+        el('div', {}, x.metin),
+        x.acik ? el('div', { class: 'alt', style: 'margin-top:6px' }, el('button', { onclick: () => macaGit(x) }, 'Maça git ve cevap yaz')) : null))),
+      el('p', { class: 'not' }, 'Yorum yazmak için bir maçı aç; yorum kutusu maç ayrıntılarının altındadır.'));
+  } catch (e) { kutu.replaceChildren(el('div', { class: 'bilgi' }, 'Yorumlar alınamadı: ' + e.message)); }
+}
+function sekmeSec(ad) {
+  sekme = ad;
+  $('sekmeMaclar').classList.toggle('secili', ad === 'maclar');
+  $('sekmeCanli').classList.toggle('secili', ad === 'canli');
+  $('sekmeLigler').classList.toggle('secili', ad === 'ligler');
+  $('maclarSayfa').hidden = ad !== 'maclar';
+  $('canliSayfa').hidden = ad !== 'canli';
+  $('liglerSayfa').hidden = ad !== 'ligler';
+  $('sekmeKarne').classList.toggle('secili', ad === 'karne');
+  $('karneSayfa').hidden = ad !== 'karne';
+  $('sekmeYorumlar').classList.toggle('secili', ad === 'yorumlar');
+  $('yorumlarSayfa').hidden = ad !== 'yorumlar';
+  $('takimSayfa').hidden = ad !== 'takim';
+  if (ad === 'yorumlar') yorumlarAc();
+  if (ad === 'karne') karneAc();
+  if (ad === 'ligler') liglerAc();
+  if (ad === 'canli') { $('canliSayfa').replaceChildren(el('div', { class: 'kart bos' }, 'Canlı maçlar yükleniyor…')); canliBak(); }
+}
+
+function detay(m) {
+  const d = el('div', { class: 'detay' });
+  d.append(bolum('Maç sonucu', tablo([['1 · ' + m.ev, m.ms['1']], ['X · Beraberlik', m.ms['X']], ['2 · ' + m.dep, m.ms['2']],
+    ['1X (çifte şans)', m.cs['1X']], ['12 (çifte şans)', m.cs['12']], ['X2 (çifte şans)', m.cs['X2']]])));
+  d.append(bolum('İlk yarı ve İY/MS', tablo({ 'İY 1': m.iy['1'], 'İY X': m.iy['X'], 'İY 2': m.iy['2'],
+    ...Object.fromEntries(m.iyms.map(([k, p]) => ['İY/MS ' + k, p])) })));
+  d.append(bolum('Gol', tablo(m.gol)));
+  d.append(bolum('Takım golü ve handikap', tablo(m.takim)));
+  d.append(bolum('En olası skorlar', tablo(Object.fromEntries(m.skor))));
+  if (m.korner) d.append(bolum('Korner (beklenen ' + m.kor[0].toFixed(1) + ' – ' + m.kor[1].toFixed(1) + ')', tablo(m.korner)));
+  if (m.piyasa.length) {
+    const ad = { '1': '1', 'X': 'X', '2': '2', 'Ust2.5': 'Üst 2.5', 'Alt2.5': 'Alt 2.5' };
+    d.append(bolum('Piyasa oranına göre', el('table', {}, m.piyasa.map(p => el('tr', {},
+      el('td', {}, ad[p.k] + ' @' + p.oran.toFixed(2)), el('td', {}, 'model ' + yz(p.p)),
+      el('td', { class: p.ev >= 0.05 ? 'arti' : 'eksi' }, (p.ev >= 0 ? '+' : '') + (p.ev * 100).toFixed(0) + '%'))))));
+  }
+  if (m.kart) d.append(bolum('Kart (beklenen ' + m.kart_b[0].toFixed(1) + ' – ' + m.kart_b[1].toFixed(1) + ')', tablo(m.kart)));
+  if (m.ist && m.ist.length) d.append(bolum('Beklenen maç istatistikleri', el('table', { class: 'ist' },
+    el('tr', {}, el('th', {}, ''), el('th', {}, m.ev), el('th', {}, m.dep)),
+    m.ist.map(([ad, a, b]) => el('tr', {}, el('td', {}, ad), el('td', {}, a.toFixed(1)), el('td', {}, b.toFixed(1)))))));
+  if (m.cezali) {
+    const satir = [];
+    for (const t of [m.ev, m.dep]) {
+      for (const c of m.cezali[t]) satir.push(el('li', {}, el('b', {}, c.ad), ' (' + t + ') — ' + c.neden +
+        (c.gol ? ', bu sezon ' + c.gol + ' gol' : '')));
+      if (m.etki[t] > 0) satir.push(el('li', { class: 'not' }, t + ' tahmini buna göre düşürüldü: beklenen golü −%' +
+        (m.etki[t] * 25).toFixed(1) + ', rakibin beklenen golü +%' + (m.etki[t] * 20).toFixed(1)));
+      if (m.sinirda[t].length) satir.push(el('li', {}, t + ' – sınırda (bir sarı daha görürse cezalı): ' + m.sinirda[t].join(', ')));
+    }
+    d.append(el('div', { class: 'genis' }, el('h2', {}, 'Kart cezaları'),
+      satir.length ? el('ul', {}, satir) : el('div', { class: 'not' }, 'Bu maç için kart cezalısı ya da sınırda oyuncu görünmüyor.'),
+      el('div', { class: 'not', style: 'margin-top:6px' }, 'Cezalılar kart kayıtlarından tahmin edilir' +
+        (m.sinir ? ' (bu ligde ' + m.sinir + ' sarı kart = 1 maç)' : ' (bu ligde yalnızca kırmızı kart)') +
+        '; kulüp açıklamasıyla doğrula. Sakatlıklar burada yoktur, haberlere bak.')));
+  }
+  if (m.aralarinda && m.aralarinda.length) d.append(bolum('Aralarındaki son maçlar', el('table', {},
+    m.aralarinda.map(([t, h, a, skor]) => el('tr', {}, el('td', {}, t + ' · ' + h + ' – ' + a), el('td', {}, skor))))));
+  const canliHal = canliDurum[m.eid];
+  if (canliHal && canliHal.durum !== 'pre') {
+    let karsi = null;
+    if (canliHal.durum === 'post') {   // maç bitti: model ne dedi, ne oldu
+      const [h, a] = canliHal.skor, sonuc = h > a ? '1' : (h === a ? 'X' : '2');
+      const favori = Object.entries(m.ms).sort((x, y) => y[1] - x[1])[0][0];
+      const adlar = { '1': m.ev + ' kazanır', 'X': 'Beraberlik', '2': m.dep + ' kazanır' };
+      const ustTahmin = m.gol['Üst 2.5'] >= 0.5, ustOldu = h + a >= 3;
+      const kutu = (baslik, tahmin, oldu, tuttu) => el('div', {}, el('small', {}, baslik), 'Model: ' + tahmin, el('br'), 'Oldu: ' + oldu + ' ',
+        el('span', { class: tuttu ? 'tuttu' : 'tutmadi' }, tuttu ? 'Tuttu' : 'Tutmadı'));
+      karsi = el('div', { class: 'karsilastir' },
+        kutu('Maç sonucu', adlar[favori] + ' (' + yz(m.ms[favori]) + ')', adlar[sonuc], favori === sonuc),
+        kutu('Alt/Üst 2.5', (ustTahmin ? 'Üst' : 'Alt') + ' (' + yz(ustTahmin ? m.gol['Üst 2.5'] : m.gol['Alt 2.5']) + ')', ustOldu ? 'Üst' : 'Alt', ustTahmin === ustOldu),
+        kutu('Skor', m.skor[0][0] + ' (' + yz(m.skor[0][1]) + ')', h + '-' + a, m.skor[0][0] === h + '-' + a));
+    }
+    d.append(el('div', { class: 'genis' },
+      el('h2', {}, (canliHal.durum === 'in' ? 'Maç oynanıyor · ' + (canliHal.dakika || '') : 'Maç bitti · model ne dedi, ne oldu') + ' · ' + canliHal.skor[0] + ' – ' + canliHal.skor[1]),
+      karsi, olaySatirlari(canliHal), macDetayKutu(m)));
+  }
+  const sim = el('div', { class: 'genis' });
+  d.append(sim);
+  simBolumu(sim, m);
+  const kadro = el('div', { class: 'genis' });
+  d.append(kadro);
+  kadroBolumu(kadro, m);
+  const yorum = el('div', { class: 'genis' });
+  d.append(yorum);
+  yorumlariYukle(yorum, veri.tarih + '|' + m.div + '|' + m.ev + '|' + m.dep);
+  d.append(el('div', { class: 'genis' }, el('h2', {}, 'Bu maçın oranlarına yasal bahis sitelerinde bak'),
+    el('div', { class: 'bahis' },
+      [['iddaa.com', 'https://www.iddaa.com/'], ['nesine.com', 'https://www.nesine.com/'], ['oley.com', 'https://www.oley.com/']]
+        .map(([ad, adres]) => el('a', { href: adres, target: '_blank', rel: 'noopener noreferrer nofollow' }, ad + ' ›'))),
+    el('div', { class: 'not', style: 'margin-top:6px' }, 'Bağlantılar sitelerin ana sayfasına gider; maçı orada aratman gerekir. 18 yaş ve üzeri içindir. ' +
+      'Maç Analizi bu kurumlarla bağlantılı değildir ve oranlarını göstermez.')));
+  const haber = el('div', { class: 'haber' });
+  d.append(haber);
+  haberleriYukle(haber, m);
+  return d;
+}
+
+function kart(m) {
+  const anahtar = m.div + m.ev + m.dep;
+  const k = el('div', { class: 'kart', 'data-mac': anahtar });
+  k.append(el('div', { class: 'ust' }, el('b', {}, m.saat), el('span', { class: 'rozet' }, m.lig),
+    m.cezali && (m.cezali[m.ev].length + m.cezali[m.dep].length) ? el('span', { class: 'rozet uyari' },
+      'Cezalı: ' + [...m.cezali[m.ev], ...m.cezali[m.dep]].map(c => c.ad).join(', ')) : null,
+    m.kadro ? el('span', { class: 'rozet' }, 'Kadro açıklandı · tahmin yenilendi') : null,
+    m.kaba ? el('span', { class: 'rozet uyari', title: 'Bu turnuvada takım başına az maç var; tahmin kaba' }, 'Kaba tahmin') : null,
+    m.sapma ? el('span', { class: 'rozet uyari', title: 'Model ile bahis piyasası bu maçta çok farklı düşünüyor' }, 'Model piyasadan çok sapıyor – güvenme') : null));
+  k.append(el('div', { class: 'takimlar' }, takimBag(m.ev, m.div), yildiz(m.ev, ciz), el('span', {}, '–'), takimBag(m.dep, m.div), yildiz(m.dep, ciz)));
+  k.append(el('div', { class: 'canli', 'data-eid': m.eid || '' }));
+  if (m.form) {
+    const durum = t => {
+      const s = m.sira[t];
+      return el('div', {}, (m.form[t] || []).map(x => el('span', { class: 'fd ' + x }, x)),
+        s ? ' ' + s.sira + '. sıra · ' + s.puan + ' puan · ' + s.ag + '-' + s.yg : '');
+    };
+    k.append(el('div', { class: 'durumlar' }, durum(m.ev), durum(m.dep)));
+  }
+  const c = el('div', { class: 'cubuk' });
+  for (const [s, anahtarK, etiket] of [['e', '1', '1'], ['b', 'X', 'X'], ['d', '2', '2']]) {
+    const parca = el('div', { class: s }, etiket + ' ' + yz(m.ms[anahtarK]));
+    parca.style.width = (m.ms[anahtarK] * 100) + '%';
+    c.append(parca);
+  }
+  k.append(c);
+  const oz = el('div', { class: 'ozet' },
+    el('span', {}, el('span', { class: 'et' }, 'Beklenen gol '), el('b', {}, m.lh.toFixed(2) + ' – ' + m.la.toFixed(2))),
+    el('span', {}, el('span', { class: 'et' }, 'Üst 2.5 '), el('b', {}, yz(m.gol['Üst 2.5']))),
+    el('span', {}, el('span', { class: 'et' }, 'KG Var '), el('b', {}, yz(m.gol['KG Var']))),
+    m.kart ? el('span', {}, el('span', { class: 'et' }, 'Kart Üst 4.5 '), el('b', {}, yz(m.kart['Üst 4.5']))) : null,
+    m.korner ? el('span', {}, el('span', { class: 'et' }, 'Korner Üst 9.5 '), el('b', {}, yz(m.korner['Üst 9.5']))) : null,
+    el('span', {}, el('span', { class: 'et' }, 'Skor '), el('b', {}, m.skor[0][0])));
+  k.append(oz);
+  const dugme = el('button', {}, acik.has(anahtar) ? 'Kapat' : 'Tüm pazarlar ve haberler');
+  let det = null;
+  const ac = () => { det = detay(m); k.append(det); dugme.textContent = 'Kapat'; acik.add(anahtar); };
+  dugme.onclick = () => {
+    if (det) { det.remove(); det = null; dugme.textContent = 'Tüm pazarlar ve haberler'; acik.delete(anahtar); } else ac();
+  };
+  const paylasD = el('button', {}, 'Paylaş');
+  paylasD.onclick = () => paylas(m, paylasD);
+  k.append(el('div', { class: 'alt' }, dugme, paylasD));
+  if (acik.has(anahtar)) ac();
+  return k;
+}
+
+function oneCikanCiz() {
+  const kutu = $('oneCikan');
+  kutu.replaceChildren();
+  if (!veri || veri.maclar.length < 3) return;
+  const net = veri.maclar.filter(m => !m.kaba);
+  const havuz = net.length >= 3 ? net : veri.maclar;
+  const enB = (dizi, f) => dizi.reduce((a, b) => (f(b) > f(a) ? b : a));
+  const fav = m => Math.max(m.ms['1'], m.ms['X'], m.ms['2']);
+  const favAd = m => m.ms['1'] >= m.ms['2'] ? m.ev : m.dep;
+  const secim = [];
+  const ekle = (baslik, m, aciklama) => { if (m && !secim.some(s => s.m === m)) secim.push({ baslik, m, aciklama }); };
+  const netFav = enB(havuz, fav);
+  ekle('En net favori', netFav, favAd(netFav) + ' ' + yz(fav(netFav)));
+  const gollu = enB(havuz, m => m.lh + m.la);
+  ekle('En gollü beklenen', gollu, 'beklenen ' + (gollu.lh + gollu.la).toFixed(1) + ' gol · Üst 2.5 ' + yz(gollu.gol['Üst 2.5']));
+  const dengeli = enB(havuz, m => -fav(m));
+  ekle('En dengeli maç', dengeli, '1 ' + yz(dengeli.ms['1']) + ' · X ' + yz(dengeli.ms['X']) + ' · 2 ' + yz(dengeli.ms['2']));
+  const kartli = havuz.filter(m => m.kart_b);
+  if (kartli.length) { const k = enB(kartli, m => m.kart_b[0] + m.kart_b[1]); ekle('En sert beklenen', k, 'beklenen ' + (k.kart_b[0] + k.kart_b[1]).toFixed(1) + ' kart'); }
+  kutu.append(el('div', { class: 'one' }, secim.map(s => el('button', { onclick: () => macaGit({ tarih: veri.tarih, div: s.m.div, ev: s.m.ev, dep: s.m.dep }) },
+    el('small', {}, s.baslik), el('b', {}, s.m.ev + ' – ' + s.m.dep), el('span', {}, s.aciklama)))));
+}
+function ciz() {
+  const liste = $('liste'), ligler = $('ligler'), kupon = $('kupon');
+  liste.replaceChildren(); ligler.replaceChildren(); kupon.replaceChildren();
+  if (!veri) return;
+  const sayim = {};
+  for (const m of veri.maclar) sayim[m.div] = [m.lig, (sayim[m.div]?.[1] || 0) + 1];
+  if (seciliLig && !sayim[seciliLig]) seciliLig = null;
+  if (veri.maclar.length) {
+    const cip = (kod, yazi) => el('button', { class: 'cip' + (seciliLig === kod ? ' secili' : ''), onclick: () => { seciliLig = kod; ciz(); } }, yazi);
+    ligler.append(cip(null, 'Hepsi ' + veri.maclar.length));
+    for (const [kod, [ad, n]] of Object.entries(sayim)) ligler.append(cip(kod, ad + ' ' + n));
+  }
+  const gosterilen = veri.maclar.filter(m => !seciliLig || m.div === seciliLig)
+    .map((m, i) => [m, i]).sort((a, b) => (favoriMac(b[0]) - favoriMac(a[0])) || (a[1] - b[1])).map(x => x[0]);   // favori takımların maçları önce
+  oneCikanCiz();
+  if (!gosterilen.length) {
+    const sonraki = veri.gunler.find(g => g > veri.tarih) || veri.gunler[0];
+    liste.append(el('div', { class: 'kart bos' }, el('div', {}, gunAdi(veri.tarih) + ' için fikstürde maç yok.'),
+      veri.veri_zamani ? null : el('div', {}, 'Henüz veri indirilmemiş; "Veriyi güncelle"ye bas.'),
+      sonraki ? el('div', { class: 'alt', style: 'justify-content:center' },
+        el('button', { class: 'ana', onclick: () => git(sonraki) }, 'En yakın maç günü: ' + gunAdi(sonraki))) : null));
+  }
+  for (const m of gosterilen) liste.append(kart(m));
+  if (veri.atlanan.length) liste.append(el('div', { class: 'kart not' }, 'Analiz edilemeyen maçlar: ', veri.atlanan.join('; ')));
+
+  if (veri.maclar.length) {
+    const ad = { '1': 'Ev sahibi kazanır', 'X': 'Beraberlik', '2': 'Deplasman kazanır', 'Ust2.5': 'Üst 2.5', 'Alt2.5': 'Alt 2.5' };
+    const k = el('div', { class: 'kart kupon' }, el('h2', {}, 'Modelin değer gördüğü seçimler'));
+    if (!veri.kuponlar.length) k.append(el('div', { class: 'not' }, 'Kurallara uyan seçim yok (oran 1.60–4.00, modele göre +%5 ile +%40 arası avantaj).'));
+    veri.kuponlar.forEach((kp, i) => {
+      const oran = kp.reduce((a, b) => a * b.oran, 1), olas = kp.reduce((a, b) => a * b.p, 1);
+      k.append(el('div', {}, el('b', {}, 'Kupon ' + (i + 1)), ' · toplam oran ' + oran.toFixed(2) + ' · modele göre tutma ihtimali ' + (olas * 100).toFixed(1) + '%',
+        el('ul', {}, kp.map(b => el('li', {}, b.mac + ' — ' + ad[b.pazar] + ' @' + b.oran.toFixed(2) + ' (model ' + yz(b.p) + ')')))));
+    });
+    k.append(el('div', { class: 'not', style: 'margin-top:8px' }, 'Oranlar ABD\'li bir bahis şirketinden (DraftKings) gelir; milli maçlar, Avrupa kupaları ve modelin piyasadan çok saptığı maçlar buraya alınmaz.'));
+    kupon.append(k);
+  }
+  canliCiz();
+}
+
+async function git(tarih) {
+  $('tarih').value = tarih;
+  $('durum').replaceChildren();
+  if (!veri || veri.tarih !== tarih) $('liste').replaceChildren(el('div', { class: 'kart bos' }, 'Maçlar yükleniyor…'));
+  try {
+    veri = await getir('/api/analiz?tarih=' + tarih);
+    veriZamani = veri.veri_zamani;
+    ciz();
+    canliBak();
+  } catch (e) {
+    $('durum').replaceChildren(el('div', { class: 'bilgi' }, 'Analiz alınamadı: ' + e.message));
+  }
+}
+const kaydir = gun => { const d = new Date($('tarih').value + 'T12:00'); d.setDate(d.getDate() + gun); git(iso(d)); };
+
+async function durumBak() {
+  try {
+    const d = await getir('/api/durum');
+    $('guncelle').disabled = d.guncelleniyor;
+    $('guncelle').hidden = !!d.site;
+    $('guncelle').textContent = d.guncelleniyor ? 'Güncelleniyor…' : 'Veriyi güncelle';
+    $('veri').textContent = d.guncelleniyor ? d.mesaj
+      : d.veri_zamani ? 'Veri: ' + new Date(d.veri_zamani * 1000).toLocaleString('tr-TR', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })
+      : 'Veri yok';
+    if (d.hata) $('durum').replaceChildren(el('div', { class: 'bilgi' }, d.hata));
+    if ((guncelleniyordu && !d.guncelleniyor) || (d.veri_zamani && d.veri_zamani !== veriZamani && !d.guncelleniyor)) git($('tarih').value);
+    guncelleniyordu = d.guncelleniyor;
+    setTimeout(durumBak, d.guncelleniyor ? 2000 : 20000);
+  } catch (e) {
+    $('veri').textContent = 'Uygulama kapanmış; yeniden aç.';
+    setTimeout(durumBak, 20000);
+  }
+}
+
+async function genelHaber() {
+  try {
+    const h = await getir('/api/haber?genel=1');
+    if (h.length) $('genel').replaceChildren(el('div', { class: 'kart haber' }, el('h2', {}, 'Süper Lig: sakatlık, ceza ve kadro haberleri'), haberListesi(h)));
+  } catch (e) { /* haber yoksa bölüm boş kalır */ }
+}
+
+$('sekmeMaclar').onclick = () => sekmeSec('maclar');
+$('sekmeCanli').onclick = () => sekmeSec('canli');
+$('sekmeLigler').onclick = () => sekmeSec('ligler');
+$('sekmeKarne').onclick = () => sekmeSec('karne');
+$('sekmeYorumlar').onclick = () => sekmeSec('yorumlar');
+$('ara').oninput = aramaYap;
+$('ara').onkeydown = e => { if (e.key === 'Escape') { $('ara').value = ''; $('aramaSonuc').replaceChildren(); } };
+document.addEventListener('click', e => { if (!e.target.closest('.arama')) $('aramaSonuc').replaceChildren(); });
+$('geri').onclick = () => kaydir(-1);
+$('ileri').onclick = () => kaydir(1);
+$('bugun').onclick = () => git(iso(new Date()));
+$('yarin').onclick = () => { const d = new Date(); d.setDate(d.getDate() + 1); git(iso(d)); };
+$('tarih').onchange = e => e.target.value && git(e.target.value);
+$('guncelle').onclick = async () => { await getir('/api/guncelle', { method: 'POST' }); guncelleniyordu = true; durumBak(); };
+
+// ---- Maç asistanı (sağ alttaki sohbet) ----
+let asistanMesgul = false;
+function balonEkle(sinif, metin, maclar) {
+  const b = el('div', { class: 'balon ' + sinif }, metin);
+  for (const m of maclar || []) b.append(el('button', { class: 'macBag', onclick: () => { $('asistan').hidden = true; macaGit(m); } },
+    m.ev + ' – ' + m.dep + '  ›'));
+  $('asistanAkis').append(b);
+  $('asistanAkis').scrollTop = $('asistanAkis').scrollHeight;
+  return b;
+}
+function hizliGoster(liste) {
+  $('asistanHizli').replaceChildren(...(liste || []).slice(0, 4).map(s => el('button', { onclick: () => asistanSor(s) }, s)));
+}
+async function asistanSor(soru) {
+  soru = (soru || '').trim();
+  if (!soru || asistanMesgul) return;
+  asistanMesgul = true;
+  $('asistanSoru').value = '';
+  balonEkle('ben', soru);
+  const bekle = balonEkle('o', 'Bakıyorum…');
+  try {
+    const r = await getir('/api/asistan', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ soru }) });
+    bekle.remove();
+    balonEkle('o', r.cevap, r.maclar);
+    hizliGoster(r.secenekler);
+  } catch (e) {
+    bekle.textContent = 'Cevap veremedim: ' + e.message;
+  }
+  asistanMesgul = false;
+}
+$('asistanAc').onclick = () => {
+  const a = $('asistan');
+  a.hidden = !a.hidden;
+  if (!a.hidden) {
+    if (!$('asistanAkis').children.length) {
+      balonEkle('o', 'Merhaba, ben sitenin maç asistanıyım. Bir takımın maçını, kazanma ihtimalini, gol ve korner beklentisini, cezalıları, puan durumunu sorabilir ya da kupon isteyebilirsin.');
+      hizliGoster(['Bugün hangi maçlar var?', 'Sağlam 3 maçlık kupon', 'Galatasaray kazanır mı?', 'Tahminler ne kadar tutuyor?']);
+    }
+    $('asistanSoru').focus();
+  }
+};
+$('asistanKapat').onclick = () => { $('asistan').hidden = true; };
+$('asistanForm').onsubmit = e => { e.preventDefault(); asistanSor($('asistanSoru').value); };
+
+// Reklam: sunucuda reklam.html dosyası varsa içeriği üst ve alt reklam alanına yerleştirilir (kod çalıştırılır).
+fetch('/reklam').then(r => r.ok ? r.text() : '').then(kod => {
+  if (!kod.trim()) return;
+  for (const id of ['reklamUst', 'reklamAlt']) $(id).append(document.createRange().createContextualFragment(kod));
+}).catch(() => {});
+
+const acilis = new URLSearchParams(location.search);
+if (acilis.get('tarih') && acilis.get('ev') && acilis.get('dep')) {   // paylaşılan maç bağlantısı
+  macaGit({ tarih: acilis.get('tarih'), div: acilis.get('div') || '', ev: acilis.get('ev'), dep: acilis.get('dep') });
+} else git(iso(new Date()));
+durumBak();
+genelHaber();
+
+// Telefona uygulama olarak kurulabilmesi ve bağlantı yokken de açılabilmesi için
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
+</script>
+</body>
+</html>

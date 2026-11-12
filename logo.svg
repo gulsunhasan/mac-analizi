@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Maç Analizi">
+  <rect width="64" height="64" rx="15" fill="#123524"/>
+  <g fill="none" stroke-width="9" stroke-linecap="butt" transform="rotate(-90 32 32)">
+    <circle cx="32" cy="32" r="19" stroke="#4cc38a" stroke-dasharray="57 62.4"/>
+    <circle cx="32" cy="32" r="19" stroke="#d5dcd7" stroke-dasharray="23 96.4" stroke-dashoffset="-60"/>
+    <circle cx="32" cy="32" r="19" stroke="#7aa7ee" stroke-dasharray="30.4 89" stroke-dashoffset="-86"/>
+  </g>
+  <circle cx="32" cy="32" r="6.5" fill="#ffffff"/>
+</svg>
