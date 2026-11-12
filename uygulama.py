@@ -42,6 +42,7 @@ UYGULAMA_DOSYALARI = {   # adres: (dosya, içerik türü)
     "/ikon-192.png": ("ikon-192.png", "image/png"),
     "/ikon-512.png": ("ikon-512.png", "image/png"),
     "/apple-touch-icon.png": ("apple-touch-icon.png", "image/png"),
+    "/paylasim.png": ("paylasim.png", "image/png"),   # WhatsApp/Telegram/X link önizlemesi
 }
 YORUM_SINIRI = (5, 600)   # aynı adresten 10 dakikada en fazla 5 yorum
 yorum_gecmisi = {}

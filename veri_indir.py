@@ -210,16 +210,11 @@ def main(yaz=print):
         # Bağlantı sorunu: eksik veriyle eski dosyaların üstüne yazma, olduğu gibi bırak.
         raise RuntimeError(f"{len(basarisiz)}/{len(istekler)} istek indirilemedi; eski veri korunuyor")
     hazir = {k: v or [] for k, v in hazir.items()}
-    # Ayrıştırma sağlam mı? İlk maçlardan bir örnek dene; çoğu okunamıyorsa hiçbir dosyaya dokunma.
-    ornek = [(e, lig) for (lig, _), liste in hazir.items() for e in liste[:5]][:200]
-    okunamayan = 0
-    for e, lig in ornek:
-        try:
-            cevir(e, lig)
-        except Exception:
-            okunamayan += 1
-    if not ornek or okunamayan > len(ornek) * 0.2:
-        raise RuntimeError(f"maç verisi okunamadı ({okunamayan}/{len(ornek)}); eski veri korunuyor")
+    # Ayrıştırma sağlam mı? indir() her maçı okunur hâle çevirip döndürür; okunamayanlar düşer.
+    # Normalde binlerce maç gelir; çok azı geldiyse hiçbir dosyaya dokunma.
+    toplam = sum(len(v) for v in hazir.values())
+    if toplam < 1000:
+        raise RuntimeError(f"maç verisi okunamadı (yalnızca {toplam} maç geldi); eski veri korunuyor")
     for div, (lig, ad) in LIGLER.items():
         maclar = {}
         for yil in (bas - 1, bas, bas + 1):

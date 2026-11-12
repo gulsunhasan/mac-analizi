@@ -7,7 +7,15 @@
 <meta name="description" content="Süper Lig, Avrupa ligleri ve Avrupa kupaları için maç tahminleri, olasılıklar, kart cezalıları, puan durumu ve canlı skor.">
 <meta property="og:title" content="Maç Analizi">
 <meta property="og:description" content="Maç tahminleri, istatistik ve canlı skor.">
-<meta property="og:image" content="/logo.svg">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://mac-analizi.onrender.com/">
+<meta property="og:image" content="https://mac-analizi.onrender.com/paylasim.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Maç Analizi">
+<meta name="twitter:description" content="Maç tahminleri, istatistik ve canlı skor.">
+<meta name="twitter:image" content="https://mac-analizi.onrender.com/paylasim.png">
 <meta name="theme-color" content="#123524">
 <link rel="icon" type="image/svg+xml" href="/logo.svg">
 <link rel="manifest" href="/manifest.webmanifest">
@@ -172,6 +180,9 @@ tr:last-child td { border-bottom: 0; }
 .one small { display: block; color: var(--soluk); font-size: 12px; text-transform: uppercase; letter-spacing: .05em; }
 .one b { display: block; margin: 3px 0 1px; font-size: 15px; }
 .one span { color: var(--soluk); font-size: 13px; }
+.paylasBar { display: flex; flex-wrap: wrap; gap: 8px; margin: -2px 0 14px; }
+.paylasBar button { font-size: 13.5px; padding: 6px 12px; border-radius: 999px; }
+.paylasBar .ana { background: var(--vurgu); border-color: var(--vurgu); color: #fff; }
 .karsilastir { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; margin: 8px 0 12px; }
 .karsilastir div { border: 1px solid var(--cizgi); border-radius: 10px; padding: 8px 12px; font-size: 14px; }
 .karsilastir small { display: block; color: var(--soluk); }
@@ -319,6 +330,76 @@ async function paylas(m, dugme) {
     dugme.textContent = 'Kopyalanamadı';
   }
   setTimeout(() => { dugme.textContent = 'Paylaş'; }, 2000);
+}
+// Metni paylaş: telefonda paylaşım menüsü, bilgisayarda panoya kopyala
+async function metinPaylas(metin, dugme, eskiYazi) {
+  try {
+    if (navigator.share) { await navigator.share({ title: 'Maç Analizi', text: metin }); return; }
+    await navigator.clipboard.writeText(metin);
+    dugme.textContent = 'Kopyalandı ✓';
+  } catch (e) {
+    if (e && e.name === 'AbortError') return;
+    dugme.textContent = 'Kopyalanamadı';
+  }
+  setTimeout(() => { dugme.textContent = eskiYazi; }, 2000);
+}
+
+// Instagram / WhatsApp durumu için 1080x1350 kupon görseli
+function gorselCiz(baslik, altBaslik, satirlar) {
+  const G = 1080, Y = 1350, c = document.createElement('canvas');
+  c.width = G; c.height = Y;
+  const x = c.getContext('2d');
+  const yazi = (t, px, agirlik, renk, sol, ust, maks) => {
+    x.font = agirlik + ' ' + px + 'px -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif';
+    x.fillStyle = renk;
+    let s = String(t);
+    while (maks && x.measureText(s).width > maks && s.length > 4) s = s.slice(0, -2) + '…';
+    x.fillText(s, sol, ust);
+  };
+  x.fillStyle = '#123524'; x.fillRect(0, 0, G, Y);
+  // logo halkası
+  const halka = (renk, bas, uzun) => { x.beginPath(); x.strokeStyle = renk; x.lineWidth = 22; x.arc(130, 140, 46, bas, bas + uzun); x.stroke(); };
+  halka('#4cc38a', -Math.PI / 2, 2.95); halka('#d5dcd7', -Math.PI / 2 + 3.15, 1.15); halka('#7aa7ee', -Math.PI / 2 + 4.5, 1.6);
+  x.beginPath(); x.fillStyle = '#fff'; x.arc(130, 140, 15, 0, 7); x.fill();
+  yazi('Maç Analizi', 58, '700', '#ffffff', 210, 132);
+  yazi(altBaslik, 32, '400', '#9fc7b1', 212, 180);
+  yazi(baslik, 64, '800', '#ffffff', 80, 330, G - 160);
+  let ust = 400;
+  const yukseklik = Math.min(170, Math.floor((Y - 260 - ust) / Math.max(satirlar.length, 1)));
+  for (const s of satirlar) {
+    x.fillStyle = 'rgba(255,255,255,0.07)';
+    x.beginPath();
+    if (x.roundRect) x.roundRect(60, ust, G - 120, yukseklik - 18, 24); else x.rect(60, ust, G - 120, yukseklik - 18);
+    x.fill();
+    yazi(s.ust, 30, '500', '#9fc7b1', 96, ust + 50, G - 380);
+    yazi(s.mac, 42, '700', '#ffffff', 96, ust + 104, G - 380);
+    x.textAlign = 'right';
+    yazi(s.deger, 50, '800', '#4cc38a', G - 96, ust + 96);
+    x.textAlign = 'left';
+    ust += yukseklik;
+  }
+  yazi(location.host, 44, '700', '#ffffff', 80, Y - 130);
+  yazi('İstatistik modelinin hesabıdır; garanti değildir, bahis tavsiyesi sayılmaz.', 26, '400', '#9fc7b1', 80, Y - 76, G - 160);
+  return new Promise(cozum => c.toBlob(cozum, 'image/png'));
+}
+
+async function gorselPaylas(baslik, altBaslik, satirlar, metin, dugme) {
+  const eski = dugme.textContent;
+  dugme.textContent = 'Hazırlanıyor…';
+  try {
+    const blob = await gorselCiz(baslik, altBaslik, satirlar);
+    const dosya = new File([blob], 'mac-analizi-' + (veri ? veri.tarih : 'kupon') + '.png', { type: 'image/png' });
+    if (navigator.canShare && navigator.canShare({ files: [dosya] })) {
+      await navigator.share({ files: [dosya], text: metin });
+    } else {   // bilgisayarda: görseli indir
+      const a = el('a', { href: URL.createObjectURL(blob), download: dosya.name });
+      document.body.append(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+    }
+  } catch (e) {
+    if (!(e && e.name === 'AbortError')) { dugme.textContent = 'Olmadı, tekrar dene'; setTimeout(() => { dugme.textContent = eski; }, 2500); return; }
+  }
+  dugme.textContent = eski;
 }
 const acik = new Set();
 
@@ -952,6 +1033,25 @@ function oneCikanCiz() {
   if (kartli.length) { const k = enB(kartli, m => m.kart_b[0] + m.kart_b[1]); ekle('En sert beklenen', k, 'beklenen ' + (k.kart_b[0] + k.kart_b[1]).toFixed(1) + ' kart'); }
   kutu.append(el('div', { class: 'one' }, secim.map(s => el('button', { onclick: () => macaGit({ tarih: veri.tarih, div: s.m.div, ev: s.m.ev, dep: s.m.dep }) },
     el('small', {}, s.baslik), el('b', {}, s.m.ev + ' – ' + s.m.dep), el('span', {}, s.aciklama)))));
+
+  // Günün öne çıkanlarını paylaş (metin + Instagram/WhatsApp görseli)
+  const gun = gunAdi(veri.tarih);
+  const metin = '⚽ ' + gun + ' – Maç Analizi\n\n' +
+    secim.map(s => '▪️ ' + s.baslik + ': ' + s.m.ev + ' – ' + s.m.dep + ' (' + s.aciklama + ')').join('\n') +
+    '\n\nBütün maçlar, olasılıklar ve canlı skor: ' + location.origin + '/?tarih=' + veri.tarih;
+  const satirlar = secim.map(s => {
+    let deger;
+    if (s.baslik === 'En net favori') deger = yz(fav(s.m));
+    else if (s.baslik === 'En gollü beklenen') deger = 'Ü2.5 ' + yz(s.m.gol['Üst 2.5']);
+    else if (s.baslik === 'En dengeli maç') deger = 'X ' + yz(s.m.ms['X']);
+    else deger = (s.m.kart_b[0] + s.m.kart_b[1]).toFixed(1) + ' kart';
+    return { ust: s.baslik + (s.baslik === 'En net favori' ? ' · ' + favAd(s.m) : ''), mac: s.m.ev + ' – ' + s.m.dep, deger };
+  });
+  const metinD = el('button', { class: 'ana' }, '📤 Günün özetini paylaş');
+  metinD.onclick = () => metinPaylas(metin, metinD, '📤 Günün özetini paylaş');
+  const gorselD = el('button', {}, '🖼️ Görsel olarak paylaş');
+  gorselD.onclick = () => gorselPaylas('Günün öne çıkanları', gun, satirlar, metin, gorselD);
+  kutu.append(el('div', { class: 'paylasBar' }, metinD, gorselD));
 }
 function ciz() {
   const liste = $('liste'), ligler = $('ligler'), kupon = $('kupon');
@@ -986,6 +1086,16 @@ function ciz() {
       const oran = kp.reduce((a, b) => a * b.oran, 1), olas = kp.reduce((a, b) => a * b.p, 1);
       k.append(el('div', {}, el('b', {}, 'Kupon ' + (i + 1)), ' · toplam oran ' + oran.toFixed(2) + ' · modele göre tutma ihtimali ' + (olas * 100).toFixed(1) + '%',
         el('ul', {}, kp.map(b => el('li', {}, b.mac + ' — ' + ad[b.pazar] + ' @' + b.oran.toFixed(2) + ' (model ' + yz(b.p) + ')')))));
+      const kMetin = '🎯 Maç Analizi – ' + gunAdi(veri.tarih) + ' kuponu\n\n' +
+        kp.map(b => '▪️ ' + b.mac + ' — ' + ad[b.pazar] + ' @' + b.oran.toFixed(2)).join('\n') +
+        '\n\nToplam oran ' + oran.toFixed(2) + ' · modele göre tutma ihtimali %' + (olas * 100).toFixed(0) +
+        '\n' + location.origin + '/?tarih=' + veri.tarih;
+      const kSatir = kp.map(b => ({ ust: ad[b.pazar] + ' · model ' + yz(b.p), mac: b.mac, deger: '@' + b.oran.toFixed(2) }));
+      const d1 = el('button', { class: 'ana' }, '📤 Kuponu paylaş');
+      d1.onclick = () => metinPaylas(kMetin, d1, '📤 Kuponu paylaş');
+      const d2 = el('button', {}, '🖼️ Görsel');
+      d2.onclick = () => gorselPaylas('Kupon ' + (i + 1) + ' · oran ' + oran.toFixed(2), gunAdi(veri.tarih), kSatir, kMetin, d2);
+      k.append(el('div', { class: 'paylasBar', style: 'margin:6px 0 12px' }, d1, d2));
     });
     k.append(el('div', { class: 'not', style: 'margin-top:8px' }, 'Oranlar ABD\'li bir bahis şirketinden (DraftKings) gelir; milli maçlar, Avrupa kupaları ve modelin piyasadan çok saptığı maçlar buraya alınmaz.'));
     kupon.append(k);
