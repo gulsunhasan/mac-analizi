@@ -548,6 +548,7 @@ function canliCiz() {
   }
 }
 let bugunVeri = null, sekme = 'maclar';
+let dunVeri = null, dunCanli = [];   // gece yarısını geçen maçlar fikstürde önceki güne kayıtlıdır
 async function bugunuAl() {
   const t = iso(new Date());
   if (veri && veri.tarih === t) { bugunVeri = veri; return; }
@@ -579,6 +580,24 @@ async function canliBak() {
       }
       if (degisti && veri === bv) ciz();
     } else canliDurum = {};
+    // Gece yarısından sonra: dünün hâlâ süren maçlarını da canlıya ekle
+    dunCanli = [];
+    if (new Date().getHours() < 8) {
+      const d = new Date(); d.setDate(d.getDate() - 1);
+      const dt = iso(d);
+      if (!dunVeri || dunVeri.tarih !== dt || dunVeri.veri_zamani !== veriZamani) dunVeri = await getir('/api/analiz?ozet=1&tarih=' + dt);
+      if (dunVeri.maclar.length) {
+        const dc = await getir('/api/canli?tarih=' + dt);
+        for (const m of dunVeri.maclar) {
+          const c = dc[m.eid];
+          if (!c || c.durum !== 'in') continue;
+          canliDurum[m.eid] = c;
+          m._tarih = dt;
+          dunCanli.push(m);
+          canliSim[m.eid] = await getir(simAdres(m, '&dk=' + dakikaBul(c) + '&h=' + c.skor[0] + '&a=' + c.skor[1] + '&kh=' + c.kirmizi[0] + '&ka=' + c.kirmizi[1]));
+        }
+      }
+    }
   } catch (e) { /* bağlantı yoksa bir sonraki turda yeniden denenir */ }
   canliCiz();
   canliSayfaCiz();
@@ -658,13 +677,13 @@ function canliKart(m) {
       el('span', {}, el('span', { class: 'et' }, 'Maç sonu Üst 2.5 '), el('b', {}, yz(s.ust25)))));
   }
   k.append(el('div', { class: 'alt' }, detayDugmesi(m, 'Anlatım ve istatistikler'),
-    el('button', { onclick: () => macaGit({ tarih: bugunVeri.tarih, div: m.div, ev: m.ev, dep: m.dep }) }, 'Maç önü analizi')));
+    el('button', { onclick: () => macaGit({ tarih: m._tarih || bugunVeri.tarih, div: m.div, ev: m.ev, dep: m.dep }) }, 'Maç önü analizi')));
   if (acikDetay.has(m.eid)) k.append(macDetayKutu(m));
   return k;
 }
 function canliSayfaCiz() {
   const mac = bugunVeri ? bugunVeri.maclar : [];
-  const canli = mac.filter(m => canliDurum[m.eid] && canliDurum[m.eid].durum === 'in');
+  const canli = mac.concat(dunCanli).filter(m => canliDurum[m.eid] && canliDurum[m.eid].durum === 'in');
   $('sekmeCanli').textContent = 'Canlı' + (canli.length ? ' ' + canli.length : '');
   $('sekmeCanli').classList.toggle('var', canli.length > 0);
   if (sekme !== 'canli') return;
@@ -674,7 +693,7 @@ function canliSayfaCiz() {
   const yakinda = mac.filter(m => baslamadi(m) && dakikaKala(m) > -15 && dakikaKala(m) <= 180);
   const biten = mac.filter(m => canliDurum[m.eid] && canliDurum[m.eid].durum === 'post');
   const parca = [];
-  const git2 = m => el('button', { onclick: () => macaGit({ tarih: bugunVeri.tarih, div: m.div, ev: m.ev, dep: m.dep }) }, 'Analiz');
+  const git2 = m => el('button', { onclick: () => macaGit({ tarih: m._tarih || bugunVeri.tarih, div: m.div, ev: m.ev, dep: m.dep }) }, 'Analiz');
   if (canli.length) {
     parca.push(el('div', { class: 'grupBaslik' }, 'Şu an oynanıyor · ' + canli.length + ' maç'));
     canli.forEach(m => parca.push(canliKart(m)));
