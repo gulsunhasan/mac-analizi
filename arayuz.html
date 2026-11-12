@@ -470,7 +470,7 @@ let bugunVeri = null, sekme = 'maclar';
 async function bugunuAl() {
   const t = iso(new Date());
   if (veri && veri.tarih === t) { bugunVeri = veri; return; }
-  if (!bugunVeri || bugunVeri.tarih !== t || bugunVeri.veri_zamani !== veriZamani) bugunVeri = await getir('/api/analiz?tarih=' + t);
+  if (!bugunVeri || bugunVeri.tarih !== t || bugunVeri.veri_zamani !== veriZamani) bugunVeri = await getir('/api/analiz?ozet=1&tarih=' + t);
 }
 async function canliBak() {
   clearTimeout(canliZaman);
@@ -493,7 +493,7 @@ async function canliBak() {
         if (!m.eid || m.kadro || kalan > 80 || kalan < -130 || (c && c.bitti)) continue;
         try {
           const k = await getir('/api/kadro?eid=' + m.eid);
-          if (k.aciklandi && k.mac) { bv.maclar[i] = { ...k.mac, kadro: k }; degisti = true; }
+          if (k.aciklandi && k.mac) { bv.maclar[i] = { ...k.mac, kadro: k, tam: true }; degisti = true; }
         } catch (e) { /* bir sonraki turda yeniden denenir */ }
       }
       if (degisti && veri === bv) ciz();
@@ -904,7 +904,23 @@ function kart(m) {
   k.append(oz);
   const dugme = el('button', {}, acik.has(anahtar) ? 'Kapat' : 'Tüm pazarlar ve haberler');
   let det = null;
-  const ac = () => { det = detay(m); k.append(det); dugme.textContent = 'Kapat'; acik.add(anahtar); };
+  const ac = async () => {
+    dugme.textContent = 'Kapat';
+    acik.add(anahtar);
+    if (!m.tam) {   // liste yalnızca özet taşır; tablolar ilk açılışta indirilir
+      det = el('div', { class: 'detay' }, el('div', { class: 'not' }, 'Maç ayrıntıları yükleniyor…'));
+      k.append(det);
+      const bekleyen = det;
+      try {
+        Object.assign(m, await getir('/api/mac?tarih=' + veri.tarih + '&div=' + encodeURIComponent(m.div) +
+          '&ev=' + encodeURIComponent(m.ev) + '&dep=' + encodeURIComponent(m.dep)), { tam: true });
+      } catch (e) { bekleyen.replaceChildren(el('div', { class: 'not' }, 'Ayrıntılar alınamadı: ' + e.message)); return; }
+      if (det !== bekleyen) return;   // bu arada kapatıldı
+      bekleyen.remove();
+    }
+    det = detay(m);
+    k.append(det);
+  };
   dugme.onclick = () => {
     if (det) { det.remove(); det = null; dugme.textContent = 'Tüm pazarlar ve haberler'; acik.delete(anahtar); } else ac();
   };
@@ -982,7 +998,7 @@ async function git(tarih) {
   $('durum').replaceChildren();
   if (!veri || veri.tarih !== tarih) $('liste').replaceChildren(el('div', { class: 'kart bos' }, 'Maçlar yükleniyor…'));
   try {
-    veri = await getir('/api/analiz?tarih=' + tarih);
+    veri = await getir('/api/analiz?ozet=1&tarih=' + tarih);
     veriZamani = veri.veri_zamani;
     ciz();
     canliBak();

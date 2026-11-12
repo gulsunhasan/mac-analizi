@@ -186,7 +186,45 @@ def mac_analiz(fx, hedef, bugun, kadro_etki=None):
     return sonuc, ad
 
 
+analiz_onbellek = {}
+OZET_ALANLARI = ("div", "lig", "saat", "ev", "dep", "lh", "la", "ms", "sapma", "kaba", "eid", "espn", "sh", "sa",
+                 "baslama", "form", "sira", "cezali", "kart_b", "kor")
+
+
+def ozetle(m):
+    """Maç listesi için küçük özet: kartta görünen alanlar. Tablolar maç açılınca /api/mac ile gelir."""
+    o = {k: m[k] for k in OZET_ALANLARI if k in m}
+    o["skor"] = m["skor"][:1]
+    o["gol"] = {k: m["gol"][k] for k in ("Üst 2.5", "Alt 2.5", "KG Var")}
+    o["korner"] = {"Üst 9.5": m["korner"]["Üst 9.5"]} if m.get("korner") else None
+    o["kart"] = {"Üst 4.5": m["kart"]["Üst 4.5"]} if m.get("kart") else None
+    return o
+
+
+def analiz_ozet(hedef):
+    tam = analiz(hedef)
+    return dict(tam, maclar=[ozetle(m) for m in tam["maclar"]])
+
+
+def tek_mac(hedef, div, ev, dep):
+    for m in analiz(hedef)["maclar"]:
+        if (m["div"], m["ev"], m["dep"]) == (div, ev, dep):
+            return m
+    return None
+
+
 def analiz(hedef):
+    anahtar = (hedef, veri_zamani(), date.today())
+    if anahtar in analiz_onbellek:
+        return analiz_onbellek[anahtar]
+    sonuc = analiz_hesapla(hedef)
+    if len(analiz_onbellek) > 40:
+        analiz_onbellek.clear()
+    analiz_onbellek[anahtar] = sonuc
+    return sonuc
+
+
+def analiz_hesapla(hedef):
     bugun = date.today()
     fb = fikstur_bilgi()
     if not fb["satirlar"]:
@@ -897,12 +935,23 @@ def guncelle():
 
 
 # ====================== Sunucu ======================
+def yuvarla(o):
+    """Yanıtı küçültmek için ondalıkları 4 basamağa indirir (0.4885836207578354 -> 0.4886)."""
+    if isinstance(o, float):
+        return round(o, 4)
+    if isinstance(o, dict):
+        return {k: yuvarla(v) for k, v in o.items()}
+    if isinstance(o, (list, tuple)):
+        return [yuvarla(v) for v in o]
+    return o
+
+
 class Istek(BaseHTTPRequestHandler):
     def log_message(self, *a):
         pass
 
     def gonder(self, govde, tur="application/json; charset=utf-8", kod=200):
-        veri = govde if isinstance(govde, bytes) else json.dumps(govde, ensure_ascii=False).encode("utf-8")
+        veri = govde if isinstance(govde, bytes) else json.dumps(yuvarla(govde), ensure_ascii=False, separators=(",", ":")).encode("utf-8")
         sikistir = len(veri) > 1024 and "gzip" in (self.headers.get("Accept-Encoding") or "")
         if sikistir:   # yavaş bağlantıda sayfa ve analiz verisi 8-10 kat küçülür
             import gzip
@@ -947,7 +996,14 @@ class Istek(BaseHTTPRequestHandler):
                     hedef = datetime.strptime(q.get("tarih", [""])[0], "%Y-%m-%d").date()
                 except ValueError:
                     hedef = date.today()
-                return self.gonder(analiz(hedef))
+                return self.gonder(analiz_ozet(hedef) if q.get("ozet") else analiz(hedef))
+            if u.path == "/api/mac":
+                try:
+                    hedef = datetime.strptime(q.get("tarih", [""])[0], "%Y-%m-%d").date()
+                except ValueError:
+                    return self.gonder({"hata": "tarih gerekli"}, kod=400)
+                m = tek_mac(hedef, q.get("div", [""])[0][:8], q.get("ev", [""])[0][:60], q.get("dep", [""])[0][:60])
+                return self.gonder(m) if m else self.gonder({"hata": "Maç bulunamadı."}, kod=404)
             if u.path == "/api/takim":
                 return self.gonder(takim_sayfa(q.get("ad", [""])[0][:60], q.get("div", [""])[0][:8]))
             if u.path == "/api/yorumlar":

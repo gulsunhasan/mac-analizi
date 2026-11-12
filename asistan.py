@@ -15,6 +15,7 @@ GENEL_KELIME = {"united", "city", "real", "sporting", "club", "spor", "athletic"
 TAKMA_AD = {"gs": "galatasaray", "cimbom": "galatasaray", "fb": "fenerbahce", "fener": "fenerbahce",
             "bjk": "besiktas", "kartal": "besiktas", "ts": "trabzonspor", "trabzon": "trabzonspor",
             "milli takim": "turkiye", "milliler": "turkiye", "barca": "barcelona", "manu": "manchester united",
+            "bayern": "bayern munih", "basaksehir": "basaksehir", "rize": "caykur rizespor", "kizilyildiz": "kizilyildiz",
             "psg": "paris saint-germain"}
 ONERILER = ["Bugün hangi maçlar var?", "Sağlam 3 maçlık kupon", "Galatasaray kazanır mı?", "Tahminler ne kadar tutuyor?"]
 UYARI = "Bunlar istatistik modelinin hesabıdır; garanti değildir, bahis tavsiyesi sayılmaz."

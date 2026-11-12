@@ -19,6 +19,8 @@ import json
 import os
 import ssl
 import urllib.request
+
+import adlar as ad_cevirici
 from concurrent.futures import ThreadPoolExecutor
 from datetime import date, datetime, timedelta
 
@@ -155,7 +157,8 @@ def cevir(e, lig=""):
     zaman = datetime.strptime(e["date"][:16], "%Y-%m-%dT%H:%M") + TR_FARK
     durum = e["status"]["type"]
     m = dict(id=e["id"], sezon=e["season"]["year"], z=zaman,
-             ev=ev["team"]["displayName"].strip(), dep=dep["team"]["displayName"].strip(),
+             ev=ad_cevirici.cevir(ev["team"]["displayName"].strip(), lig in MILLI),
+             dep=ad_cevirici.cevir(dep["team"]["displayName"].strip(), lig in MILLI),
              bitti=bool(durum.get("completed")), planli=durum.get("name") == "STATUS_SCHEDULED",
              canli=durum.get("state") == "in", espn=lig, oran=oranlar(y))
     if m["bitti"]:
@@ -207,6 +210,16 @@ def main(yaz=print):
         # Bağlantı sorunu: eksik veriyle eski dosyaların üstüne yazma, olduğu gibi bırak.
         raise RuntimeError(f"{len(basarisiz)}/{len(istekler)} istek indirilemedi; eski veri korunuyor")
     hazir = {k: v or [] for k, v in hazir.items()}
+    # Ayrıştırma sağlam mı? İlk maçlardan bir örnek dene; çoğu okunamıyorsa hiçbir dosyaya dokunma.
+    ornek = [(e, lig) for (lig, _), liste in hazir.items() for e in liste[:5]][:200]
+    okunamayan = 0
+    for e, lig in ornek:
+        try:
+            cevir(e, lig)
+        except Exception:
+            okunamayan += 1
+    if not ornek or okunamayan > len(ornek) * 0.2:
+        raise RuntimeError(f"maç verisi okunamadı ({okunamayan}/{len(ornek)}); eski veri korunuyor")
     for div, (lig, ad) in LIGLER.items():
         maclar = {}
         for yil in (bas - 1, bas, bas + 1):
