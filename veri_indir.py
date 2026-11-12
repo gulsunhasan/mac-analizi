@@ -74,7 +74,16 @@ def indir(lig, yil):
             veri = r.read()
         if veri[:2] == b"\x1f\x8b":
             veri = gzip.decompress(veri)
-        return json.loads(veri).get("events", [])
+        olaylar = json.loads(veri).get("events", [])
+        del veri
+        # Ham veriyi hemen küçük hâline çevir: hepsini birden bellekte tutmak sunucuda 600 MB+ yer kaplıyordu
+        sonuc = []
+        for e in olaylar:
+            try:
+                sonuc.append(cevir(e, lig))
+            except Exception:
+                continue
+        return sonuc
     except Exception as e:
         print(f"  ! {lig} {yil} indirilemedi ({e})")
         return None   # indirilemedi (boş listeden farklı: o yıl maç yok demek)
@@ -191,7 +200,7 @@ def main(yaz=print):
     # Bütün istekleri önce, aynı anda 6'şar tane indir (sırayla ~100 sn yerine ~15 sn sürer)
     istekler = [(lig, yil) for lig, _ in LIGLER.values() for yil in (bas - 1, bas, bas + 1)]
     istekler += [(lig, yil) for lig in MILLI for yil in range(bas - 2, bas + 2)]
-    with ThreadPoolExecutor(max_workers=6) as havuz:
+    with ThreadPoolExecutor(max_workers=3) as havuz:
         hazir = dict(zip(istekler, havuz.map(lambda x: indir(*x), istekler)))
     basarisiz = [k for k, v in hazir.items() if v is None]
     if len(basarisiz) > len(istekler) * 0.15:
@@ -201,12 +210,8 @@ def main(yaz=print):
     for div, (lig, ad) in LIGLER.items():
         maclar = {}
         for yil in (bas - 1, bas, bas + 1):
-            for e in hazir[(lig, yil)]:
-                try:
-                    m = cevir(e, lig)
-                    maclar[m["id"]] = m
-                except Exception:
-                    continue
+            for m in hazir[(lig, yil)]:
+                maclar[m["id"]] = m
         ozet = []
         for sezon in (bas, bas - 1):
             oynanan = sorted((m for m in maclar.values() if m["sezon"] == sezon and m["bitti"]),
@@ -240,12 +245,8 @@ def main(yaz=print):
     maclar = {}
     for lig in MILLI:
         for yil in range(bas - 2, bas + 2):
-            for e in hazir[(lig, yil)]:
-                try:
-                    m = cevir(e, lig)
-                    maclar[m["id"]] = m
-                except Exception:
-                    continue
+            for m in hazir[(lig, yil)]:
+                maclar[m["id"]] = m
     oynanan = sorted((m for m in maclar.values() if m["bitti"]), key=lambda m: m["z"])
     kod = f"{bas % 100:02d}{(bas + 1) % 100:02d}"
     with atomik_yaz(os.path.join(KLASOR, f"{MILLI_KOD}_{kod}.csv")) as f:
