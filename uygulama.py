@@ -970,6 +970,58 @@ class Istek(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(veri)
 
+    def telegram(self):
+        """Telegram botu (webhook). Cevap, Telegram'ın isteğine verilen yanıtın içinde gönderilir;
+        böylece sunucunun bot token'ını bilmesi gerekmez."""
+        try:
+            boyut = int(self.headers.get("Content-Length") or 0)
+            if not 0 < boyut <= 65536:
+                return self.gonder({}, kod=200)
+            g = json.loads(self.rfile.read(boyut).decode("utf-8"))
+            m = g.get("message") or {}
+            metin, sohbet = (m.get("text") or "").strip(), m.get("chat") or {}
+            if not metin or "id" not in sohbet:
+                return self.gonder({})
+            ozel = sohbet.get("type") == "private"
+            bot_adi = "@gulsun_macanalizi_bot"
+            if not ozel and bot_adi not in metin.lower() and not metin.startswith("/"):
+                return self.gonder({})   # gruplarda yalnızca bota seslenilince cevap ver
+            metin = metin.replace(bot_adi, "").replace("@Gulsun_macanalizi_bot", "").strip()
+            anahtar = f"tg:{sohbet['id']}"
+            simdi = time.time()
+            eski = [t for t in asistan_gecmisi.get(anahtar, []) if simdi - t < 60]
+            if len(eski) >= 15:
+                return self.gonder({"method": "sendMessage", "chat_id": sohbet["id"],
+                                    "text": "Çok hızlı soruyorsun; bir dakika sonra tekrar dene."})
+            asistan_gecmisi[anahtar] = eski + [simdi]
+            import asistan
+            if metin.split()[0].lower() in ("/start", "/yardim", "/help"):
+                cevap = dict(cevap="Merhaba! Ben Maç Analizi botuyum ⚽\n\n"
+                                   "Bana şunları sorabilirsin:\n"
+                                   "• Bir takımın maçı: \"Galatasaray kazanır mı?\"\n"
+                                   "• Günün maçları: \"Bugün hangi maçlar var?\"\n"
+                                   "• Gol beklentisi: \"Fenerbahçe maçı kaç gol olur?\"\n"
+                                   "• Puan durumu, canlı skor, modelin karnesi\n\n"
+                                   "Günün tahminleri her sabah kanalımızda: t.me/macanliz",
+                             secenekler=asistan.ONERILER)
+            elif metin.split()[0].lower() == "/bugun":
+                cevap = asistan.cevapla("bugün hangi maçlar var", sys.modules[__name__])
+            else:
+                cevap = asistan.cevapla(metin.lstrip("/"), sys.modules[__name__])
+            yazi = cevap["cevap"]
+            if asistan.UYARI not in yazi and cevap.get("maclar"):
+                yazi += "\n\n" + asistan.UYARI
+            yazi += "\n\n🌐 mac-analizi.onrender.com"
+            yanit = {"method": "sendMessage", "chat_id": sohbet["id"], "text": yazi[:4000],
+                     "disable_web_page_preview": True}
+            if ozel and cevap.get("secenekler"):
+                yanit["reply_markup"] = {"keyboard": [[{"text": t}] for t in cevap["secenekler"][:4]],
+                                         "resize_keyboard": True}
+            return self.gonder(yanit)
+        except Exception as e:
+            print("telegram hatası:", e, file=sys.stderr)
+            return self.gonder({})
+
     def do_GET(self):
         global son_istek
         son_istek = time.time()
@@ -1050,6 +1102,8 @@ class Istek(BaseHTTPRequestHandler):
     def do_POST(self):
         global son_istek
         son_istek = time.time()
+        if self.path == "/telegram":
+            return self.telegram()
         if self.path == "/api/guncelle":
             if SITE:
                 return self.gonder({"hata": "Veri sunucuda kendiliğinden güncellenir."}, kod=403)
