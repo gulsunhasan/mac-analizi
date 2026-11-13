@@ -54,6 +54,10 @@ footer img { width: 24px; height: 24px; border-radius: 6px; }
 footer p { margin: 6px 0; }
 h2 { font-size: 15px; margin: 0 0 8px; }
 .veri { color: var(--soluk); font-size: 13px; }
+.telegram { display: inline-flex; align-items: center; gap: 6px; padding: 7px 13px; border-radius: 999px;
+  background: #229ED9; color: #fff; text-decoration: none; font-size: 14px; font-weight: 600; white-space: nowrap; }
+.telegram:hover { background: #1b8bc0; }
+.telegram svg { width: 16px; height: 16px; fill: currentColor; }
 button, input[type=date] { font: inherit; color: var(--yazi); background: var(--kart);
   border: 1px solid var(--cizgi); border-radius: 8px; padding: 6px 12px; cursor: pointer; }
 button:hover { border-color: var(--vurgu); }
@@ -218,6 +222,7 @@ ul { margin: 6px 0 0; padding-left: 20px; }
       <span><h1>Maç Analizi</h1><small>Tahmin, istatistik ve canlı skor</small></span>
     </a>
     <span class="veri" id="veri"></span>
+    <a class="telegram" href="https://t.me/macanliz" target="_blank" rel="noopener" title="Günün tahminleri her sabah Telegram'da"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21.9 4.3 18.7 19.5c-.2 1-.9 1.3-1.8.8l-4.9-3.6-2.4 2.3c-.3.3-.5.5-1 .5l.4-5 9-8.2c.4-.3-.1-.5-.6-.2L6.3 13.1l-4.8-1.5c-1-.3-1-1 .2-1.5L20.5 2.9c.9-.3 1.6.2 1.4 1.4z"/></svg>Telegram kanalımız</a>
     <button id="guncelle">Veriyi güncelle</button>
   </header>
 
@@ -264,6 +269,7 @@ ul { margin: 6px 0 0; padding-left: 20px; }
     <p>Maç Analizi; geçmiş sonuçlardan hesaplanan olasılıkları, kart cezalılarını, puan durumunu ve canlı skoru bir arada gösterir.</p>
     <p>Buradaki tahminler istatistik modelinin hesabıdır; bahis tavsiyesi değildir ve sonuç garantisi vermez. 18 yaşından küçükler için uygun değildir.</p>
     <p>Maç verileri ESPN'den, haber başlıkları Google Haberler'den alınır.</p>
+    <p>Günün öne çıkan maçları her sabah Telegram'da: <a href="https://t.me/macanliz" target="_blank" rel="noopener">t.me/macanliz</a></p>
   </footer>
 </main>
 
