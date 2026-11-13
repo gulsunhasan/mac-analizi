@@ -10,6 +10,7 @@ import os
 import sys
 import time
 import urllib.parse
+import urllib.error
 import urllib.request
 from datetime import datetime, timedelta, timezone
 
@@ -127,5 +128,24 @@ def main():
     gonder(metin)
 
 
+def hata_bildir(metin):
+    """GitHub Actions'ta hatayı herkese açık 'annotation' olarak yaz (token asla yazılmaz)."""
+    t = os.environ.get("TELEGRAM_TOKEN", "")
+    if t:
+        metin = metin.replace(t, "***")
+    print(f"::error::{metin}" if os.environ.get("GITHUB_ACTIONS") else metin, flush=True)
+
+
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except SystemExit as e:
+        if e.code not in (None, 0):
+            hata_bildir(str(e.code))
+        raise
+    except urllib.error.HTTPError as e:
+        hata_bildir(f"HTTP {e.code} {e.url.split('/bot')[0]}: {e.read()[:300]!r}")
+        sys.exit(1)
+    except Exception as e:
+        hata_bildir(f"{type(e).__name__}: {e}")
+        sys.exit(1)
