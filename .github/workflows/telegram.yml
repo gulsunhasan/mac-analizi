@@ -4,6 +4,11 @@ on:
   schedule:
     - cron: "0 7 * * *"   # her gün 07:00 UTC = 10:00 Türkiye saati
   workflow_dispatch:       # GitHub'da "Run workflow" ile elle de çalıştırılabilir
+    inputs:
+      deneme:
+        description: "Deneme: kontrol et ama kanala mesaj gönderme"
+        type: boolean
+        default: true
 
 jobs:
   paylas:
@@ -17,4 +22,5 @@ jobs:
       - name: Günün maçlarını kanala gönder
         env:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          DENEME: ${{ github.event.inputs.deneme }}
         run: python telegram_paylas.py

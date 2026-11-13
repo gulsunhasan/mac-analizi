@@ -113,8 +113,16 @@ def main():
     if not metin:
         print("bugün maç yok, mesaj gönderilmedi")
         return
-    if "--dene" in sys.argv:
+    if "--dene" in sys.argv or os.environ.get("DENEME") == "true":
         print(metin)
+        # Token doğru mu ve bot kanalda mesaj atabiliyor mu? (mesaj göndermeden kontrol)
+        t = token()
+        with urllib.request.urlopen(f"https://api.telegram.org/bot{t}/getMe", timeout=30) as r:
+            bot = json.loads(r.read())["result"]
+        uye = urllib.parse.urlencode({"chat_id": KANAL, "user_id": bot["id"]})
+        with urllib.request.urlopen(f"https://api.telegram.org/bot{t}/getChatMember?{uye}", timeout=30) as r:
+            durum = json.loads(r.read())["result"]
+        print(f"\nDENEME TAMAM: bot @{bot['username']}, kanalda '{durum['status']}', mesaj atabilir: {durum.get('can_post_messages')}")
         return
     gonder(metin)
 
