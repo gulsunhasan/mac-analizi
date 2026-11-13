@@ -106,15 +106,22 @@ def gonder(metin):
     print("gönderildi, mesaj no:", sonuc["result"]["message_id"])
 
 
+KAYIT = os.path.expanduser("~/.config/mac-analizi/son_gonderim")   # aynı gün iki kez göndermemek için
+
+
 def main():
     tarih = datetime.now(TR).date()
+    deneme = "--dene" in sys.argv or os.environ.get("DENEME") == "true"
+    if not deneme and os.path.exists(KAYIT) and open(KAYIT).read().strip() == tarih.isoformat():
+        print("bugünün mesajı zaten gönderilmiş")
+        return
     veriyi_bekle()
     veri = getir(f"/api/analiz?tarih={tarih.isoformat()}")
     metin = mesaj_yaz(veri, tarih)
     if not metin:
         print("bugün maç yok, mesaj gönderilmedi")
         return
-    if "--dene" in sys.argv or os.environ.get("DENEME") == "true":
+    if deneme:
         print(metin)
         # Token doğru mu ve bot kanalda mesaj atabiliyor mu? (mesaj göndermeden kontrol)
         t = token()
@@ -126,6 +133,9 @@ def main():
         print(f"\nDENEME TAMAM: bot @{bot['username']}, kanalda '{durum['status']}', mesaj atabilir: {durum.get('can_post_messages')}")
         return
     gonder(metin)
+    if os.path.isdir(os.path.dirname(KAYIT)):
+        with open(KAYIT, "w") as f:
+            f.write(tarih.isoformat())
 
 
 def hata_bildir(metin):
