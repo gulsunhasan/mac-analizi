@@ -2,6 +2,7 @@
 
 Her sabah GitHub Actions tarafından çalıştırılır (.github/workflows/telegram.yml).
 Elle denemek için:  TELEGRAM_TOKEN=... python3 telegram_paylas.py   (--dene: göndermeden yazdır)
+--aksam: günün sonuç özeti (gece çalıştırılır).
 Token kodda veya depoda DURMAZ; ortam değişkeninden ya da ~/.config/mac-analizi/telegram_token dosyasından okunur.
 """
 import html
@@ -252,7 +253,90 @@ def haftalik_karne(tarih):
                 f.write(hafta)
 
 
+AKSAM_KAYIT = os.path.expanduser("~/.config/mac-analizi/son_aksam")
+
+
+def aksam_mesaji(veri, canli, tarih):
+    """Günün sonuçları: sabahki tahminler nasıl çıktı? (tutmayanlar da yazılır)"""
+    biten = []
+    for m in veri["maclar"]:
+        c = canli.get(m.get("eid") or "")
+        if c and c.get("bitti"):
+            h, a = c["skor"]
+            fav = max(m["ms"], key=m["ms"].get)
+            sonuc = "1" if h > a else "2" if a > h else "X"
+            ust_dedi = m["gol"]["Üst 2.5"] >= 0.5
+            biten.append(dict(m=m, skor=f"{h}-{a}", tuttu=fav == sonuc, fav=fav,
+                              ust_tuttu=ust_dedi == (h + a > 2)))
+    if len(biten) < 3:
+        return None
+    gun = f"{tarih.day} {AY[tarih.month - 1]} {GUN[tarih.weekday()]}"
+    tut = sum(b["tuttu"] for b in biten)
+    ust = sum(b["ust_tuttu"] for b in biten)
+    isaret = lambda ok: "✅" if ok else "❌"
+    fav_yazi = lambda b: {"1": b["m"]["ev"], "2": b["m"]["dep"], "X": "Beraberlik"}[b["fav"]]
+    satir = [f"🌙 <b>{e(gun)} – Günün sonuçları</b>", "",
+             f"▪️ Modelin favorisi kazandı: <b>{tut}/{len(biten)}</b> (%{tut / len(biten) * 100:.0f})",
+             f"▪️ 2.5 üst/alt tahmini: <b>{ust}/{len(biten)}</b> (%{ust / len(biten) * 100:.0f})", ""]
+    ana = {id(s["m"]): s for s in one_cikanlar([b["m"] for b in biten])}
+    biten_ile = {id(b["m"]): b for b in biten}
+    if ana:
+        satir.append("🔥 <b>Öne çıkanlar</b>")
+        for mid, s in ana.items():
+            b = biten_ile[mid]
+            ok = b["ust_tuttu"] if s["ust"] == "En gollü beklenen" else b["tuttu"]
+            satir.append(f"{isaret(ok)} {e(s['ust'].split(' · ')[0])}: {e(b['m']['ev'])} {b['skor']} {e(b['m']['dep'])}")
+        satir.append("")
+    sira = {k: i for i, k in enumerate(ONCELIK)}
+    secili = sorted(biten, key=lambda b: (sira.get(b["m"]["div"], 99), b["m"]["saat"]))[:12]
+    satir.append("📋 <b>Skorlar</b> (favori → sonuç)")
+    son_lig = None
+    for b in secili:
+        if b["m"]["lig"] != son_lig:
+            satir.append(f"<i>{e(b['m']['lig'])}</i>")
+            son_lig = b["m"]["lig"]
+        satir.append(f"{isaret(b['tuttu'])} {e(b['m']['ev'])} {b['skor']} {e(b['m']['dep'])} · {e(fav_yazi(b))}")
+    satir += ["", "Tutmayanları da saklamıyoruz. Yarının maçları sabah kanalda 👋",
+              f'<a href="{SITE}/?tarih={tarih.isoformat()}">Bütün sonuçlar sitede</a>']
+    return "\n".join(satir)
+
+
+def aksam():
+    """Gece çalışır (ör. 23:50 ve 01:00). Saat 06:00'dan önceyse dünün maçlarına bakar."""
+    simdi = datetime.now(TR)
+    tarih = (simdi - timedelta(hours=6)).date()
+    deneme = "--dene" in sys.argv
+    if not deneme and os.path.exists(AKSAM_KAYIT) and open(AKSAM_KAYIT).read().strip() == tarih.isoformat():
+        print("bugünün akşam özeti zaten gönderilmiş")
+        return
+    veriyi_bekle()
+    veri = getir(f"/api/analiz?tarih={tarih.isoformat()}")
+    canli = getir(f"/api/canli?tarih={tarih.isoformat()}")
+    suruyor = [m for m in veri["maclar"]
+               if (canli.get(m.get("eid") or "") or {}).get("durum") == "in"]
+    if suruyor and simdi.hour < 3:
+        print(f"{len(suruyor)} maç hâlâ oynanıyor, özet sonraki çalışmaya kaldı")
+        return
+    metin = aksam_mesaji(veri, canli, tarih)
+    if not metin:
+        print("akşam özeti için yeterli biten maç yok")
+        return
+    if deneme:
+        print(metin)
+        return
+    sonuc = tg("sendMessage", {"chat_id": KANAL, "text": metin, "parse_mode": "HTML",
+                               "disable_web_page_preview": "true"})
+    if not sonuc.get("ok"):
+        sys.exit(f"Telegram hatası: {sonuc}")
+    print("akşam özeti gönderildi, mesaj no:", sonuc["result"]["message_id"])
+    if os.path.isdir(os.path.dirname(AKSAM_KAYIT)):
+        with open(AKSAM_KAYIT, "w") as f:
+            f.write(tarih.isoformat())
+
+
 def main():
+    if "--aksam" in sys.argv:
+        return aksam()
     tarih = datetime.now(TR).date()
     deneme = "--dene" in sys.argv or os.environ.get("DENEME") == "true"
     if not deneme and os.path.exists(KAYIT) and open(KAYIT).read().strip() == tarih.isoformat():
