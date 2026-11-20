@@ -1038,6 +1038,16 @@ class Istek(BaseHTTPRequestHandler):
                 ad, tur = UYGULAMA_DOSYALARI[u.path]
                 with open(os.path.join(KOK, ad), "rb") as f:
                     return self.gonder(f.read(), tur)
+            if u.path in ("/robots.txt", "/sitemap.xml"):   # Google'ın siteyi bulup taraması için
+                kok = "https://" + (self.headers.get("Host") or "mac-analizi.onrender.com").split(",")[0].strip()
+                if u.path == "/robots.txt":
+                    metin = f"User-agent: *\nAllow: /\nDisallow: /api/\nSitemap: {kok}/sitemap.xml\n"
+                    return self.gonder(metin.encode(), "text/plain; charset=utf-8")
+                xml = ('<?xml version="1.0" encoding="UTF-8"?>\n'
+                       '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+                       f'<url><loc>{kok}/</loc><lastmod>{date.today().isoformat()}</lastmod>'
+                       '<changefreq>daily</changefreq><priority>1.0</priority></url></urlset>\n')
+                return self.gonder(xml.encode(), "application/xml; charset=utf-8")
             if u.path == "/reklam":   # reklam.html varsa reklam kodu; yoksa boş
                 yol = os.path.join(KOK, "reklam.html")
                 kod = open(yol, "rb").read() if os.path.exists(yol) else b""

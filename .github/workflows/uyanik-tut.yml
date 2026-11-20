@@ -1,0 +1,15 @@
+name: Siteyi uyanık tut
+
+# Render'ın ücretsiz planı 15 dakika ziyaret gelmezse siteyi uyutur; ilk açılış ~30 sn sürer.
+# Bu görev 10 dakikada bir siteyi dürter, ziyaretçi her zaman hızlı açılan siteyle karşılaşır.
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+jobs:
+  durt:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - run: curl -s -o /dev/null -w "%{http_code} %{time_total}s\n" --max-time 90 https://mac-analizi.onrender.com/api/durum || true
